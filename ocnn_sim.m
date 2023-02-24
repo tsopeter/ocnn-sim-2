@@ -78,83 +78,83 @@ d1   = get_propagation_distance(round(ix), round(iy), nx/ratio, ny/ratio, distan
 
 disp("Building network...");
 
-ILayer    = imageInputLayer(inputSize, 'Name', 'input_layer'); 
-in_KLayer = imageInputLayer(inputSize, 'Name', 'kernel_input');
-KLayer  = multiplicationLayer(2, 'Name', 'kernel_layer');
+I1D1Layer = imageInputLayer(inputSize, 'Name', 'input_layer'); 
+
+I1D2Layer = imageInputLayer(inputSize, 'Name', 'kernel_layer_real');
+I1D3Layer = imageInputLayer(inputSize, 'Name', 'kernel_layer_imag');
+
+M1D1Layer = multiplicationLayer(2, 'Name', 'multiplication_layer_real');
+M1D2Layer = multiplicationLayer(2, 'Name', 'multiplication_layer_imag');
 
 C1D1Layer = convolution2dLayer([round(ix), round(iy)], 1, 'Stride', 1, 'Padding','same', 'Name', 'prop_layer_1_real_real');
 C1D2Layer = convolution2dLayer([round(ix), round(iy)], 1, 'Stride', 1, 'Padding','same', 'Name', 'prop_layer_1_imag_imag');
 C1D3Layer = convolution2dLayer([round(ix), round(iy)], 1, 'Stride', 1, 'Padding','same', 'Name', 'prop_layer_1_real_imag');
 C1D4Layer = convolution2dLayer([round(ix), round(iy)], 1, 'Stride', 1, 'Padding','same', 'Name', 'prop_layer_1_imag_real');
 
-M1D1Layer = multiplicationLayer(2, 'Name', 'multiplication_layer_1_negation');
-M1D2Layer = multiplicationLayer(2, 'Name', 'multiplication_layer_1_imag');
+M2D1Layer = multiplicationLayer(2, 'Name', 'multiplication_layer_1_negation');
+M2D2Layer = multiplicationLayer(2, 'Name', 'multiplication_layer_1_imag');
 
 A1D1Layer = additionLayer(2, 'Name', 'addition_layer_1_real');
 A1D2Layer = additionLayer(2, 'Name', 'addition_layer_1_imag');
 A1D3Layer = additionLayer(2, 'Name', 'addition_layer_1_comb');
 
-NLayer  = functionLayer(@(x)sa_forward(x), 'Name', 'nonlinear_layer');
-
+N1D1Layer = functionLayer(@(x)sa_forward(x), 'Name', 'nonlinear_layer');
 
 C2D1Layer = convolution2dLayer([round(ix), round(iy)], 1, 'Stride', 1, 'Padding','same', 'Name', 'prop_layer_2_real_real');
 C2D2Layer = convolution2dLayer([round(ix), round(iy)], 1, 'Stride', 1, 'Padding','same', 'Name', 'prop_layer_2_imag_imag');
 C2D3Layer = convolution2dLayer([round(ix), round(iy)], 1, 'Stride', 1, 'Padding','same', 'Name', 'prop_layer_2_real_imag');
 C2D4Layer = convolution2dLayer([round(ix), round(iy)], 1, 'Stride', 1, 'Padding','same', 'Name', 'prop_layer_2_imag_real');
 
-M2D1Layer = multiplicationLayer(2, 'Name', 'multiplication_layer_2_negation');
-M2D2Layer = multiplicationLayer(2, 'Name', 'multiplication_layer_2_imag');
+M3D1Layer = multiplicationLayer(2, 'Name', 'multiplication_layer_2_negation');
+M3D2Layer = multiplicationLayer(2, 'Name', 'multiplication_layer_2_imag');
 
 A2D1Layer = additionLayer(2, 'Name', 'addition_layer_2_real');
 A2D2Layer = additionLayer(2, 'Name', 'addition_layer_2_imag');
 A2D3Layer = additionLayer(2, 'Name', 'addition_layer_2_comb');
 
-
-RLayer  = multiplicationLayer(2, 'Name', 'plate_layer');
-in_RLayer = imageInputLayer(inputSize, 'Name', 'plate_input');
+R1D1Layer = multiplicationLayer(2, 'Name', 'plate_layer');
+R1D2Layer = imageInputLayer(inputSize, 'Name', 'plate_input');
 
 lgraph = layerGraph();
 layers = [
-   ILayer
-   in_KLayer
+   I1D1Layer
+   I1D2Layer
+   I1D3Layer
+
+   M1D1Layer
+   M1D2Layer
 
    C1D1Layer
    C1D2Layer
    C1D3Layer
    C1D4Layer
 
-   M1D1Layer
-   M1D2Layer
+   M2D1Layer
+   M2D2Layer
 
    A1D1Layer
    A1D2Layer
    A1D3Layer
 
-   NLayer
+   N1D1Layer
 
    C2D1Layer
    C2D2Layer
    C2D3Layer
    C2D4Layer
 
-   M2D1Layer
-   M2D2Layer
+   M3D1Layer
+   M3D2Layer
 
    A2D1Layer
    A2D2Layer
    A2D3Layer
 
-   RLayer
-   in_RLayer
-]
+   R1D1Layer
+   R1D2Layer
+];
 
-lgraph = connectLayers(lgraph, 'input_layer', 'kernel_layer/in1');
-lgraph = connectLayers(lgraph, 'kernel_input', 'kernel_layer/in2');
-lgraph = connectLayers(lgraph, 'kernel_layer', 'prop_layer_1/in');
-lgraph = connectLayers(lgraph, 'prop_layer_1', 'nonlinear_layer/in');
-lgraph = connectLayers(lgraph, 'nonlinear_layer', 'prop_layer_2/in');
-lgraph = connectLayers(lgraph, 'prop_layer_2', 'plate_layer/in1');
-lgraph = connectLayers(lgraph, 'plate_input', 'plate_layer/in2');
+lgraph = addLayers(lgraph, layers);
 
 plot(lgraph);
 
