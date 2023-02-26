@@ -42,8 +42,8 @@ w2 = get_propagation_distance(Nx, Ny, nx, ny, d2, wv);
 
 kernel = internal_random_amp(Nx, Ny);
 
-InputLayer  = imageInputLayer([dimx, dimy, 1], 'Name', 'input_layer');
-ResizeLayer = functionLayer(@(X)resize_normalize_extend(X, Nx, Ny, k), 'Name', 'resize_layer');
+InputLayer  = imageInputLayer([dimx, dimy, 1], 'Name', 'input_layer', 'Normalization', 'rescale-zero-one');
+ResizeLayer = CustomResizeLayer(1, 'resize_layer', Nx, Ny, k);
 RealKernelLayer = convolution2dLayer([Nx, Ny], 1, 'Padding', 'same', 'Bias', 0, 'Weights', real(kernel), 'WeightLearnRateFactor', 1, 'Name', 'real_kernel_layer');
 ImagKernelLayer = convolution2dLayer([Nx, Ny], 1, 'Padding', 'same', 'Bias', 0, 'Weights', imag(kernel), 'WeightLearnRateFactor', 1, 'Name', 'imag_kernel_layer');
 
@@ -52,28 +52,28 @@ ImagProp1LayerB = convolution2dLayer([Nx, Ny], 1, 'Padding','same', 'Bias', 0, '
 RealProp1LayerC = convolution2dLayer([Nx, Ny], 1, 'Padding','same', 'Bias', 0, 'WeightLearnRateFactor', 0, 'BiasInitializer','zeros', 'Weights', real(w1), 'Name', 'real_prop_1_conv2d_layer_C');
 ImagProp1LayerD = convolution2dLayer([Nx, Ny], 1, 'Padding','same', 'Bias', 0, 'WeightLearnRateFactor', 0, 'BiasInitializer','zeros', 'Weights', imag(w1), 'Name', 'imag_prop_1_conv2d_layer_D');
 
-Negation1Layer  = functionLayer(@(X)(-1 * X), 'Name', 'negation_layer_1');
+Negation1Layer  = functionLayer(@(X)(-1 * X), 'Name', 'negation_layer_1', 'Acceleratable', 1);
 Addition1LayerA = additionLayer(2, 'Name', 'real_addition_layer_1');
 Addition1LayerB = additionLayer(2, 'Name', 'imag_addition_layer_1');
 
-Abs1Layer       = functionLayer(@(X, Y)abs(X + 1i * Y), 'Name', 'absolute_layer_1', 'NumInputs', 2, 'NumOutputs', 1);
-Angle1Layer     = functionLayer(@(X, Y)angle(X + 1i * Y), 'Name', 'angle_layer_1', 'NumInputs', 2, 'NumOutputs', 1);
+Abs1Layer       = functionLayer(@(X, Y)abs(X + 1i * Y), 'Name', 'absolute_layer_1', 'NumInputs', 2, 'NumOutputs', 1, 'Acceleratable', 1);
+Angle1Layer     = functionLayer(@(X, Y)angle(X + 1i * Y), 'Name', 'angle_layer_1', 'NumInputs', 2, 'NumOutputs', 1, 'Acceleratable', 1);
 
-NonLinearLayer  = functionLayer(@(X)nonlinear_forward(X,a0), 'Name', 'nonlinear_layer');
+NonLinearLayer  = CustomNonlinearLayer(1, 'nonlinear_layer');
 
-RealLayer       = functionLayer(@(X, Y)real(X .* exp(1i * Y)), 'Name', 'real_layer', 'NumInputs', 2);
-ImagLayer       = functionLayer(@(X, Y)imag(X .* exp(1i * Y)), 'Name', 'imag_layer', 'NumInputs', 2);
+RealLayer       = functionLayer(@(X, Y)real(X .* exp(1i * Y)), 'Name', 'real_layer', 'NumInputs', 2, 'Acceleratable', 1);
+ImagLayer       = functionLayer(@(X, Y)imag(X .* exp(1i * Y)), 'Name', 'imag_layer', 'NumInputs', 2, 'Acceleratable', 1);
 
 RealProp2LayerA = convolution2dLayer([Nx, Ny], 1, 'Padding', 'same', 'Bias', 0, 'WeightLearnRateFactor', 0, 'BiasInitializer', 'zeros', 'Weights', real(w2), 'Name', 'real_prop_2_conv2d_layer_A');
 ImagProp2LayerB = convolution2dLayer([Nx, Ny], 1, 'Padding', 'same', 'Bias', 0, 'WeightLearnRateFactor', 0, 'BiasInitializer', 'zeros', 'Weights', imag(w2), 'Name', 'imag_prop_2_conv2d_layer_B');
 RealProp2LayerC = convolution2dLayer([Nx, Ny], 1, 'Padding', 'same', 'Bias', 0, 'WeightLearnRateFactor', 0, 'BiasInitializer', 'zeros', 'Weights', real(w2), 'Name', 'real_prop_2_conv2d_layer_C');
 ImagProp2LayerD = convolution2dLayer([Nx, Ny], 1, 'Padding', 'same', 'Bias', 0, 'WeightLearnRateFactor', 0, 'BiasInitializer', 'zeros', 'Weights', imag(w2), 'Name', 'imag_prop_2_conv2d_layer_D');
 
-Negation2Layer  = functionLayer(@(X)(-1 * X), 'Name', 'negation_layer_2');
+Negation2Layer  = functionLayer(@(X)(-1 * X), 'Name', 'negation_layer_2', 'Acceleratable', 1);
 Addition2LayerA = additionLayer(2, 'Name', 'real_addition_layer_2');
 Addition2LayerB = additionLayer(2, 'Name', 'imag_addition_layer_2');
 
-ReductionLayer  = functionLayer(@(X, Y)reduction(X, Y, nx, ny, r1, r2), 'Name', 'reduction_layer', 'NumInputs', 2);
+ReductionLayer  = functionLayer(@(X, Y)reduction(X, Y, nx, ny, r1, r2), 'Name', 'reduction_layer', 'NumInputs', 2, 'Acceleratable', 1);
 SoftMaxLayer    = softmaxLayer('Name', 'softmax_layer');
 Classification  = classificationLayer('Name', 'classification_layer');
 
