@@ -1,4 +1,4 @@
-classdef CustomResizeLayer < nnet.layer.Layer % ...
+classdef CustomRealImagLayer < nnet.layer.Layer % ...
         % & nnet.layer.Formattable ... % (Optional) 
         % & nnet.layer.Acceleratable % (Optional)
 
@@ -6,9 +6,7 @@ classdef CustomResizeLayer < nnet.layer.Layer % ...
         % (Optional) Layer properties.
 
         % Declare layer properties here.
-        Nx
-        Ny
-        k
+        a0 = 20;
     end
 
     properties (Learnable)
@@ -31,20 +29,17 @@ classdef CustomResizeLayer < nnet.layer.Layer % ...
     end
 
     methods
-        function layer = CustomResizeLayer(NumInputs, Name, Nx, Ny, k)
+        function layer = CustomRealImagLayer(NumInputs, Name)
             % (Optional) Create a myLayer.
             % This function must have the same name as the class.
 
             % Define layer constructor function here.
             layer.Name = Name;
             layer.NumInputs = NumInputs;
-            layer.NumOutputs = 1;
-            layer.Nx = Nx;
-            layer.Ny = Ny;
-            layer.k  = k;
+            layer.NumOutputs = 2;
         end
         
-        function Z = predict(layer,X)
+        function [Z1, Z2] = predict(layer,X1, X2)
             % Forward input data through the layer at prediction time and
             % output the result and updated state.
             %
@@ -64,11 +59,11 @@ classdef CustomResizeLayer < nnet.layer.Layer % ...
             %    parameters.
 
             % Define layer predict function here.
-            Z = (resize_normalize_extend(X, layer.Nx, layer.Ny, layer.k));
-            
+            Z1 = real(X1 .* exp(1i * X2));
+            Z2 = imag(X1 .* exp(1i * X2));
         end
 
-        function dLdX = backward(layer,X,Z,dLdZ,dLdSout)
+        function [dLdX1, dLdX2] = backward(layer,X1, X2, Z1, Z2, dLdZ1, dLdZ2, dLdSout)
             % (Optional) Backward propagate the derivative of the loss
             % function through the layer.
             %
@@ -105,7 +100,12 @@ classdef CustomResizeLayer < nnet.layer.Layer % ...
             %    of state parameters.
 
             % Define layer backward function here.
-            dLdX = dLdZ;
+            dZ1dX1 = cos(X2);
+            dZ1dX2 = -1 * X1 .* sin(X2);
+            dZ2dX1 = 1i * sin(X2);
+            dZ2dX2 = 1i * X1 .* cos(X2);
+            dLdX1  = abs(dLdZ1 .* dZ1dX1 + dLdZ2 .* dZ2dX1);
+            dLdX2  = angle(dLdZ1 .* dZ1dX2 + dLdZ2 .* dZ2dX2); 
         end
     end
 end

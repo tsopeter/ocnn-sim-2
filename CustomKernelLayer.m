@@ -1,4 +1,4 @@
-classdef CustomResizeLayer < nnet.layer.Layer % ...
+classdef CustomKernelLayer < nnet.layer.Layer % ...
         % & nnet.layer.Formattable ... % (Optional) 
         % & nnet.layer.Acceleratable % (Optional)
 
@@ -6,15 +6,15 @@ classdef CustomResizeLayer < nnet.layer.Layer % ...
         % (Optional) Layer properties.
 
         % Declare layer properties here.
-        Nx
-        Ny
-        k
+        
     end
 
     properties (Learnable)
         % (Optional) Layer learnable parameters.
 
         % Declare learnable parameters here.
+        real_kernel;
+        imag_kernel;
     end
 
     properties (State)
@@ -31,20 +31,19 @@ classdef CustomResizeLayer < nnet.layer.Layer % ...
     end
 
     methods
-        function layer = CustomResizeLayer(NumInputs, Name, Nx, Ny, k)
+        function layer = CustomKernelLayer(NumInputs, Name, kernel)
             % (Optional) Create a myLayer.
             % This function must have the same name as the class.
 
             % Define layer constructor function here.
             layer.Name = Name;
             layer.NumInputs = NumInputs;
-            layer.NumOutputs = 1;
-            layer.Nx = Nx;
-            layer.Ny = Ny;
-            layer.k  = k;
+            layer.NumOutputs = 2;
+            layer.real_kernel = real(kernel);
+            layer.imag_kernel = imag(kernel);
         end
         
-        function Z = predict(layer,X)
+        function [Z1, Z2] = predict(layer,X)
             % Forward input data through the layer at prediction time and
             % output the result and updated state.
             %
@@ -64,11 +63,11 @@ classdef CustomResizeLayer < nnet.layer.Layer % ...
             %    parameters.
 
             % Define layer predict function here.
-            Z = (resize_normalize_extend(X, layer.Nx, layer.Ny, layer.k));
-            
+            Z1 = X .* layer.real_kernel;
+            Z2 = X .* layer.imag_kernel;
         end
 
-        function dLdX = backward(layer,X,Z,dLdZ,dLdSout)
+        function [dLdX, dLdW1, dLdW2] = backward(layer, X, Z1, Z2, dLdZ1, dLdZ2, dLdSout)
             % (Optional) Backward propagate the derivative of the loss
             % function through the layer.
             %
@@ -105,7 +104,9 @@ classdef CustomResizeLayer < nnet.layer.Layer % ...
             %    of state parameters.
 
             % Define layer backward function here.
-            dLdX = dLdZ;
+            dLdX = dLdZ1;
+            dLdW1 = X;
+            dLdW2 = X;
         end
     end
 end

@@ -1,4 +1,4 @@
-classdef CustomResizeLayer < nnet.layer.Layer % ...
+classdef CustomNegationLayer < nnet.layer.Layer % ...
         % & nnet.layer.Formattable ... % (Optional) 
         % & nnet.layer.Acceleratable % (Optional)
 
@@ -6,9 +6,7 @@ classdef CustomResizeLayer < nnet.layer.Layer % ...
         % (Optional) Layer properties.
 
         % Declare layer properties here.
-        Nx
-        Ny
-        k
+        a0 = 20;
     end
 
     properties (Learnable)
@@ -31,7 +29,7 @@ classdef CustomResizeLayer < nnet.layer.Layer % ...
     end
 
     methods
-        function layer = CustomResizeLayer(NumInputs, Name, Nx, Ny, k)
+        function layer = CustomNegationLayer(NumInputs, Name)
             % (Optional) Create a myLayer.
             % This function must have the same name as the class.
 
@@ -39,9 +37,6 @@ classdef CustomResizeLayer < nnet.layer.Layer % ...
             layer.Name = Name;
             layer.NumInputs = NumInputs;
             layer.NumOutputs = 1;
-            layer.Nx = Nx;
-            layer.Ny = Ny;
-            layer.k  = k;
         end
         
         function Z = predict(layer,X)
@@ -64,7 +59,7 @@ classdef CustomResizeLayer < nnet.layer.Layer % ...
             %    parameters.
 
             % Define layer predict function here.
-            Z = (resize_normalize_extend(X, layer.Nx, layer.Ny, layer.k));
+            Z = -1 * X;
             
         end
 
@@ -105,7 +100,7 @@ classdef CustomResizeLayer < nnet.layer.Layer % ...
             %    of state parameters.
 
             % Define layer backward function here.
-            dLdX = dLdZ;
+            dLdX = -1 * dLdZ;
         end
     end
 end

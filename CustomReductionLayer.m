@@ -1,4 +1,4 @@
-classdef CustomResizeLayer < nnet.layer.Layer % ...
+classdef CustomReductionLayer < nnet.layer.Layer % ...
         % & nnet.layer.Formattable ... % (Optional) 
         % & nnet.layer.Acceleratable % (Optional)
 
@@ -6,9 +6,10 @@ classdef CustomResizeLayer < nnet.layer.Layer % ...
         % (Optional) Layer properties.
 
         % Declare layer properties here.
-        Nx
-        Ny
-        k
+        nx;
+        ny;
+        r1;
+        r2;
     end
 
     properties (Learnable)
@@ -31,7 +32,7 @@ classdef CustomResizeLayer < nnet.layer.Layer % ...
     end
 
     methods
-        function layer = CustomResizeLayer(NumInputs, Name, Nx, Ny, k)
+        function layer = CustomReductionLayer(NumInputs, Name, nx, ny, r1, r2)
             % (Optional) Create a myLayer.
             % This function must have the same name as the class.
 
@@ -39,12 +40,13 @@ classdef CustomResizeLayer < nnet.layer.Layer % ...
             layer.Name = Name;
             layer.NumInputs = NumInputs;
             layer.NumOutputs = 1;
-            layer.Nx = Nx;
-            layer.Ny = Ny;
-            layer.k  = k;
+            layer.nx = nx;
+            layer.ny = ny;
+            layer.r1 = r1;
+            layer.r2 =
         end
         
-        function Z = predict(layer,X)
+        function Z = predict(layer,X1, X2)
             % Forward input data through the layer at prediction time and
             % output the result and updated state.
             %
@@ -64,11 +66,10 @@ classdef CustomResizeLayer < nnet.layer.Layer % ...
             %    parameters.
 
             % Define layer predict function here.
-            Z = (resize_normalize_extend(X, layer.Nx, layer.Ny, layer.k));
-            
+            Z = reduction(X1, X2, layer.nx, layer.ny, layer.r1, layer.r2);
         end
 
-        function dLdX = backward(layer,X,Z,dLdZ,dLdSout)
+        function [dLdX1, dLdX2] = backward(layer,X1, X2, Z,dLdZ,dLdSout)
             % (Optional) Backward propagate the derivative of the loss
             % function through the layer.
             %
@@ -105,7 +106,11 @@ classdef CustomResizeLayer < nnet.layer.Layer % ...
             %    of state parameters.
 
             % Define layer backward function here.
-            dLdX = dLdZ;
+            s = size(X1);
+            dZdX1 = detector_plate(s(1), s(2), layer.nx, layer.ny, layer.r1, layer.r2);
+
+            dLdX1 = dLdZ;
+            dLdX2 = dLdZ;
         end
     end
 end
