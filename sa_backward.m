@@ -3,11 +3,9 @@ function z = sa_backward(E)
     g  = E;
 
     if (g < 0.0001)
-        m = 0.0001;
-        z = m;
+        z = single(0.0001);
     else
         q = abs(sa_forward(E))/g;
-        m = q * exp(1+(a0*g*g)/(1+g^2)^2);
-        z = m;
+        z = single(q * exp(1+(a0*g*g)/(1+g^2)^2));
     end
 end

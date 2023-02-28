@@ -43,7 +43,7 @@ classdef CustomReductionLayer < nnet.layer.Layer % ...
             layer.nx = nx;
             layer.ny = ny;
             layer.r1 = r1;
-            layer.r2 =
+            layer.r2 = r2;
         end
         
         function Z = predict(layer,X1, X2)
@@ -67,50 +67,6 @@ classdef CustomReductionLayer < nnet.layer.Layer % ...
 
             % Define layer predict function here.
             Z = reduction(X1, X2, layer.nx, layer.ny, layer.r1, layer.r2);
-        end
-
-        function [dLdX1, dLdX2] = backward(layer,X1, X2, Z,dLdZ,dLdSout)
-            % (Optional) Backward propagate the derivative of the loss
-            % function through the layer.
-            %
-            % Inputs:
-            %         layer   - Layer to backward propagate through 
-            %         X       - Layer input data 
-            %         Z       - Layer output data 
-            %         dLdZ    - Derivative of loss with respect to layer 
-            %                   output
-            %         dLdSout - (Optional) Derivative of loss with respect 
-            %                   to state output
-            %         memory  - Memory value from forward function
-            % Outputs:
-            %         dLdX   - Derivative of loss with respect to layer input
-            %         dLdW   - (Optional) Derivative of loss with respect to
-            %                  learnable parameter 
-            %         dLdSin - (Optional) Derivative of loss with respect to 
-            %                  state input
-            %
-            %  - For layers with state parameters, the backward syntax must
-            %    include both dLdSout and dLdSin, or neither.
-            %  - For layers with multiple inputs, replace X and dLdX with
-            %    X1,...,XN and dLdX1,...,dLdXN, respectively, where N is
-            %    the number of inputs.
-            %  - For layers with multiple outputs, replace Z and dlZ with
-            %    Z1,...,ZM and dLdZ,...,dLdZM, respectively, where M is the
-            %    number of outputs.
-            %  - For layers with multiple learnable parameters, replace 
-            %    dLdW with dLdW1,...,dLdWP, where P is the number of 
-            %    learnable parameters.
-            %  - For layers with multiple state parameters, replace dLdSin
-            %    and dLdSout with dLdSin1,...,dLdSinK and 
-            %    dLdSout1,...,dldSoutK, respectively, where K is the number
-            %    of state parameters.
-
-            % Define layer backward function here.
-            s = size(X1);
-            dZdX1 = detector_plate(s(1), s(2), layer.nx, layer.ny, layer.r1, layer.r2);
-
-            dLdX1 = dLdZ;
-            dLdX2 = dLdZ;
         end
     end
 end

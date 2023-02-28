@@ -58,6 +58,8 @@ Addition1LayerB = additionLayer(2, 'Name', 'imag_addition_layer_1');
 
 NonLinearLayer  = CustomNonlinearLayer(2, 'nonlinear_layer');
 
+RealImagLayer   = CustomRealImagLayer(2, 'real_imag_layer');
+
 RealProp2LayerA = convolution2dLayer([ix, iy], 1, 'Padding', 'same', 'Bias', 0, 'WeightLearnRateFactor', 0, 'BiasInitializer', 'zeros', 'Weights', real(w2), 'Name', 'real_prop_2_conv2d_layer_A');
 ImagProp2LayerB = convolution2dLayer([ix, iy], 1, 'Padding', 'same', 'Bias', 0, 'WeightLearnRateFactor', 0, 'BiasInitializer', 'zeros', 'Weights', imag(w2), 'Name', 'imag_prop_2_conv2d_layer_B');
 RealProp2LayerC = convolution2dLayer([ix, iy], 1, 'Padding', 'same', 'Bias', 0, 'WeightLearnRateFactor', 0, 'BiasInitializer', 'zeros', 'Weights', real(w2), 'Name', 'real_prop_2_conv2d_layer_C');
@@ -88,6 +90,8 @@ layers = [
 
     NonLinearLayer
 
+    RealImagLayer
+    
     RealProp2LayerA
     ImagProp2LayerB
     RealProp2LayerC
@@ -134,7 +138,7 @@ lgraph = connectLayers(lgraph, 'real_prop_1_conv2d_layer_C', 'imag_addition_laye
 
 % Nonlinear layer
 lgraph = connectLayers(lgraph, 'real_addition_layer_1', 'nonlinear_layer/in1');
-lgraph = connectLayers(lgraph, 'imag_addition_layer_1', 'nonlinear_layer/in2');
+lgrapg = connectLayers(lgraph, 'imag_addition_layer_1', 'nonlinear_layer/in2');
 
 lgraph = connectLayers(lgraph, 'nonlinear_layer/out1', 'real_prop_2_conv2d_layer_A');
 lgraph = connectLayers(lgraph, 'nonlinear_layer/out1', 'imag_prop_2_conv2d_layer_B');
@@ -157,9 +161,9 @@ lgraph = connectLayers(lgraph, 'imag_addition_layer_2', 'reduction_layer/in2');
 lgraph = connectLayers(lgraph, 'reduction_layer', 'softmax_layer');
 lgraph = connectLayers(lgraph, 'softmax_layer', 'classification_layer');
 
-%plot(lgraph);
+plot(lgraph);
 
-net = trainNetwork(imdsTrain,lgraph,options);
+%net = trainNetwork(imdsTrain,lgraph,options);
 
 YPred = classify(net,imdsValidation);
 YValidation = imdsValidation.Labels;

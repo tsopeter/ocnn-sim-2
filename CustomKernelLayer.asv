@@ -111,12 +111,14 @@ classdef CustomKernelLayer < nnet.layer.Layer % ...
                 dLdW1 = dLdZ .* X * layer.rate;
                 dLdW2 = dLdZ .* X * layer.rate;
             else
-                dLdW1 = zeros(size(layer.real_kernel), 'single');
-                dLdW2 = zeros(size(layer.imag_kernel), 'single');
+                dLW1 = zeros(size(layer.real_kernel));
+                
                 for i=1:W(4)
-                    dLdW1 = dLdW1 + (dLdZ1(:, :, 1, i) .* X(:,:,1,i) * layer.rate/W(4));
-                    dLdW2 = dLdW2 + (dLdZ2(:, :, 1, i) .* X(:,:,1,i) * layer.rate/W(4));
+                    dLdW1 = X(:,:,1,i);
+                    dLdW2 = X(:,:,1,i);
                 end
+                dLdW1 = dLdW1 .* dLdZ1 * layer.rate/W(4);
+                dLdW2 = dLdW2 .* dLdZ2 * layer.rate/W(4);
             end
 
             dLdX = dLdZ1;
