@@ -76,8 +76,8 @@ classdef CustomNonlinearLayer < nnet.layer.Layer % ...
                     AZ1(:,:,1,i)=single(QX .* G);
                     AZ2(:,:,1,i)=single(QY .* G);
                 end
-                Z1 = gpuArray(AZ1);
-                Z2 = gpuArray(AZ2);
+                Z1 = single(AZ1);
+                Z2 = single(AZ2);
             end
         end
 
@@ -135,8 +135,8 @@ classdef CustomNonlinearLayer < nnet.layer.Layer % ...
                     AdLdX1(:,:,1,i)=single(dLdZ1(:,:,1,i) .* G);
                     AdLdX2(:,:,1,i)=single(dLdZ1(:,:,1,i) .* G);
                 end
-                dLdX1 = gpuArray(AdLdX2);
-                dLdX2 = gpuArray(AdLdX2);
+                dLdX1 = single(AdLdX2);
+                dLdX2 = single(AdLdX2);
             end
         end
     end

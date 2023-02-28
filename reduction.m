@@ -14,7 +14,7 @@ function Z = reduction(X, Y, nx, ny, r1, r2)   % reduction layer reduces to 10 c
         end
     else
         dim = size(X);
-        Z = gpuArray(dlarray(zeros(1, 1, 10, W(4), 'single')));
+        Z = single(dlarray(zeros(1, 1, 10, W(4), 'single')));
 
         for i=1:1:W(4)
             QX  = X(:, :, 1, i);
