@@ -108,8 +108,8 @@ classdef CustomKernelLayer < nnet.layer.Layer % ...
             
             W = size(X);
             if (length(W)==2)
-                dLdW1 = dLdZ .* X * layer.rate;
-                dLdW2 = dLdZ .* X * layer.rate;
+                dLdW1 = dLdZ1 .* X * layer.rate;
+                dLdW2 = dLdZ2 .* X * layer.rate;
             else
                 dLdW1 = zeros(size(layer.real_kernel), 'single');
                 dLdW2 = zeros(size(layer.imag_kernel), 'single');
