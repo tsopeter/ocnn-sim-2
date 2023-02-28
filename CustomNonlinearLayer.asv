@@ -81,7 +81,7 @@ classdef CustomNonlinearLayer < nnet.layer.Layer % ...
             end
         end
 
-        function [dLdX1, dLdX2] = backward(layer,X1, X2, Z1, Z2, dLdZ1, dLdZ2, dLdSout)
+        function [dLdX1, dLdX2] = backward(layer,X1, X2, Z1, Z2, dLdZ,dLdSout)
             % (Optional) Backward propagate the derivative of the loss
             % function through the layer.
             %
@@ -135,8 +135,8 @@ classdef CustomNonlinearLayer < nnet.layer.Layer % ...
                     AdLdX1(:,:,1,i)=single(dLdZ1(:,:,1,i) .* G);
                     AdLdX2(:,:,1,i)=single(dLdZ1(:,:,1,i) .* G);
                 end
-                dLdX1 = gpuArray(AdLdX2);
-                dLdX2 = gpuArray(AdLdX2);
+                dLdX1 = gpuArray(AZ1);
+                dLd2 = gpuArray(AZ2);
             end
         end
     end

@@ -157,7 +157,7 @@ lgraph = connectLayers(lgraph, 'imag_addition_layer_2', 'reduction_layer/in2');
 lgraph = connectLayers(lgraph, 'reduction_layer', 'softmax_layer');
 lgraph = connectLayers(lgraph, 'softmax_layer', 'classification_layer');
 
-%plot(lgraph);
+plot(lgraph);
 
 net = trainNetwork(imdsTrain,lgraph,options);
 
