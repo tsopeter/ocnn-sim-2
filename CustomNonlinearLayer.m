@@ -131,7 +131,7 @@ classdef CustomNonlinearLayer < nnet.layer.Layer % ...
                     QX = X1(:,:,1,i);
                     QY = X2(:,:,1,i);
                     M = sqrt(QX.^2+QY.^2);
-                    G = single(nonlinear_forward(M, layer.a0));
+                    G = single(nonlinear_backward(M, layer.a0));
                     AdLdX1(:,:,1,i)=single(dLdZ1(:,:,1,i) .* G);
                     AdLdX2(:,:,1,i)=single(dLdZ1(:,:,1,i) .* G);
                 end
