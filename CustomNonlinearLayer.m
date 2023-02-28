@@ -140,7 +140,7 @@ classdef CustomNonlinearLayer < nnet.layer.Layer  & nnet.layer.Acceleratable
                 AdLdX1(:,:,1,i)=single(QdZ1 .* internal_implt_derivation(QX, QY));
                 AdLdX2(:,:,1,i)=single(QdZ2 .* internal_implt_derivation(QY, QX));
             end
-            dLdX1 = single(AdLdX2);
+            dLdX1 = single(AdLdX1);
             dLdX2 = single(AdLdX2);
         end
     end
