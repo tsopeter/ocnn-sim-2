@@ -1,4 +1,4 @@
-classdef CustomNonlinearLayer < nnet.layer.Layer % ...
+classdef CustomNonlinearLayer < nnet.layer.Layer  & nnet.layer.Acceleratable  
         % & nnet.layer.Formattable ... % (Optional) 
         % & nnet.layer.Acceleratable % (Optional)
 

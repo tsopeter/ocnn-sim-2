@@ -5,7 +5,6 @@ classdef CustomClassificationLayer < nnet.layer.ClassificationLayer % ...
         % (Optional) Layer properties.
 
         % Layer properties go here.
-        
     end
  
     methods
@@ -29,22 +28,7 @@ classdef CustomClassificationLayer < nnet.layer.ClassificationLayer % ...
             %         loss  - Loss between Y and T
 
             % Layer forward loss function goes here.
-        end
-        
-        function dLdY = backwardLoss(layer,Y,T)
-            % (Optional) Backward propagate the derivative of the loss 
-            % function.
-            %
-            % Inputs:
-            %         layer - Output layer
-            %         Y     – Predictions made by network
-            %         T     – Training targets
-            %
-            % Output:
-            %         dLdY  - Derivative of the loss with respect to the 
-            %                 predictions Y
-
-            % Layer backward loss function goes here.
+            loss = 0.5 * (T - Y).^2;
         end
     end
 end

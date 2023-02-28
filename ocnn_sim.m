@@ -66,9 +66,9 @@ Negation2Layer  = CustomNegationLayer(1, 'negation_layer_2');
 Addition2LayerA = additionLayer(2, 'Name', 'real_addition_layer_2');
 Addition2LayerB = additionLayer(2, 'Name', 'imag_addition_layer_2');
 
-ReductionLayer  = CustomReductionLayer(2, 'reduction_layer', nx, ny, r1, r2);
-SoftMaxLayer    = softmaxLayer('Name', 'softmax_layer');
-Classification  = classificationLayer('Name', 'classification_layer');
+MaskLayer       = CustomMaskLayer(2, 'mask_layer', Nx, Ny, nx, ny, r1, r2);
+Flatten         = CustomFlattenLayer(1, 'flatten', Nx, Ny, nx, ny, r1, r2);
+Classification  = classificationLayer('Name', 'classification_layer', 'ClassWeights','none');
 
 layers = [
     InputLayer
@@ -96,8 +96,8 @@ layers = [
     Addition2LayerA
     Addition2LayerB
 
-    ReductionLayer
-    SoftMaxLayer
+    MaskLayer
+    Flatten
     Classification];
 
 options = trainingOptions('sgdm', ...
@@ -149,12 +149,15 @@ lgraph = connectLayers(lgraph, 'negation_layer_2', 'real_addition_layer_2/in2');
 lgraph = connectLayers(lgraph, 'imag_prop_2_conv2d_layer_B', 'imag_addition_layer_2/in1');
 lgraph = connectLayers(lgraph, 'real_prop_2_conv2d_layer_C', 'imag_addition_layer_2/in2');
 
-% Reduce
-lgraph = connectLayers(lgraph, 'real_addition_layer_2', 'reduction_layer/in1');
-lgraph = connectLayers(lgraph, 'imag_addition_layer_2', 'reduction_layer/in2');
+% Mask
+lgraph = connectLayers(lgraph, 'real_addition_layer_2', 'mask_layer/in1');
+lgraph = connectLayers(lgraph, 'imag_addition_layer_2', 'mask_layer/in2');
 
-lgraph = connectLayers(lgraph, 'reduction_layer', 'softmax_layer');
-lgraph = connectLayers(lgraph, 'softmax_layer', 'classification_layer');
+% flatten
+lgraph = connectLayers(lgraph, 'mask_layer', 'flatten');
+
+% Classify
+lgraph = connectLayers(lgraph, 'flatten', 'classification_layer');
 
 plot(lgraph);
 

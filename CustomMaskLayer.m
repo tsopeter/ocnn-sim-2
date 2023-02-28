@@ -1,4 +1,4 @@
-classdef CustomMaskLayer < nnet.layer.Layer % ...
+classdef CustomMaskLayer < nnet.layer.Layer  & nnet.layer.Acceleratable 
         % & nnet.layer.Formattable ... % (Optional) 
         % & nnet.layer.Acceleratable % (Optional)
 
@@ -42,7 +42,7 @@ classdef CustomMaskLayer < nnet.layer.Layer % ...
             % Define layer constructor function here.
             layer.Name = Name;
             layer.NumInputs = NumInputs;
-            layer.NumOutputs = 2;
+            layer.NumOutputs = 1;
             layer.Nx = Nx;
             layer.Ny = Ny;
             layer.nx = nx;
@@ -86,7 +86,7 @@ classdef CustomMaskLayer < nnet.layer.Layer % ...
             end
         end
 
-        function [dLdX1, dLdX2] = backward(layer,X1, X2, Z1, Z2, dLdZ1, dLdZ2, dLdSout)
+        function [dLdX1, dLdX2] = backward(layer,X1, X2, Z, dLdZ, dLdSout)
             % (Optional) Backward propagate the derivative of the loss
             % function through the layer.
             %
