@@ -118,22 +118,31 @@ classdef CustomNonlinearLayer < nnet.layer.Layer % ...
             %    of state parameters.
 
             % Define layer backward function here.
+            function R = internal_implt_derivation(XI, YI)
+                C  = sqrt(XI.^2+YI.^2);
+                G  = nonlinear_backward(C, layer.a0);
+                Q  = 1 ./ C;
+                F1 = G .* Q .* XI;
+                F2 = G .* (Q + (XI.^2) .* (Q.^3));
+                R = F1 + F2;
+            end
+
+
             W = size(X1);
             if (length(W)==2)
                 M = sqrt(X1.^2 + X2.^2);
-                G = single(nonlinear_backward(M, layer.a0));
-                dLdX1 = dLdZ1 .* G;
-                dLdX2 = dLdZ2 .* G;
+                dLdX1 = dLdZ1 .* internal_implt_derivation(X1, X2);
+                dLdX2 = dLdZ2 .* internal_implt_derivation(X2, X1);
             else
                 AdLdX1 = zeros(W,'single');
                 AdLdX2 = zeros(W,'single');
                 for i=1:W(4)
-                    QX = X1(:,:,1,i);
-                    QY = X2(:,:,1,i);
-                    M = sqrt(QX.^2+QY.^2);
-                    G = single(nonlinear_backward(M, layer.a0));
-                    AdLdX1(:,:,1,i)=single(dLdZ1(:,:,1,i) .* G);
-                    AdLdX2(:,:,1,i)=single(dLdZ1(:,:,1,i) .* G);
+                    QX   = X1(:,:,1,i);
+                    QY   = X2(:,:,1,i);
+                    QdZ1 = dLdZ1(:,:,1,i);
+                    QdZ2 = dLdZ2(:,:,1,i);
+                    AdLdX1(:,:,1,i)=single(QdZ1 .* internal_implt_derivation(QX, QY));
+                    AdLdX2(:,:,1,i)=single(QdZ2 .* internal_implt_derivation(QY, QX));
                 end
                 dLdX1 = single(AdLdX2);
                 dLdX2 = single(AdLdX2);
