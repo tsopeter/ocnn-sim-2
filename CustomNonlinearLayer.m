@@ -60,25 +60,22 @@ classdef CustomNonlinearLayer < nnet.layer.Layer % ...
 
             % Define layer predict function here.
             W = size(X1);
-            if (length(W)==2)
-                M = sqrt(X1.^2 + X2.^2);
-                G = single(nonlinear_forward(M, layer.a0))./M;
-                Z1 = G .* X1;
-                Z2 = G .* X2;
-            else
-                AZ1 = zeros(W,'single');
-                AZ2 = zeros(W,'single');
-                for i=1:W(4)
-                    QX = X1(:,:,1,i);
-                    QY = X2(:,:,1,i);
-                    M = sqrt(QX.^2+QY.^2);
-                    G = single(nonlinear_forward(M, layer.a0)./M);
-                    AZ1(:,:,1,i)=single(QX .* G);
-                    AZ2(:,:,1,i)=single(QY .* G);
-                end
-                Z1 = single(AZ1);
-                Z2 = single(AZ2);
+            if length(W)<=2
+                W(3)=1;
+                W(4)=1;
             end
+            AZ1 = zeros(W,'single');
+            AZ2 = zeros(W,'single');
+            for i=1:W(4)
+                QX = X1(:,:,1,i);
+                QY = X2(:,:,1,i);
+                M = sqrt(QX.^2+QY.^2);
+                G = single(nonlinear_forward(M, layer.a0)./M);
+                AZ1(:,:,1,i)=single(QX .* G);
+                AZ2(:,:,1,i)=single(QY .* G);
+            end
+            Z1 = single(AZ1);
+            Z2 = single(AZ2);
         end
 
         function [dLdX1, dLdX2] = backward(layer,X1, X2, Z1, Z2, dLdZ1, dLdZ2, dLdSout)
@@ -127,26 +124,24 @@ classdef CustomNonlinearLayer < nnet.layer.Layer % ...
                 R = F1 + F2;
             end
 
+            AdLdX1 = zeros(W,'single');
+            AdLdX2 = zeros(W,'single');
 
-            W = size(X1);
-            if (length(W)==2)
-                M = sqrt(X1.^2 + X2.^2);
-                dLdX1 = dLdZ1 .* internal_implt_derivation(X1, X2);
-                dLdX2 = dLdZ2 .* internal_implt_derivation(X2, X1);
-            else
-                AdLdX1 = zeros(W,'single');
-                AdLdX2 = zeros(W,'single');
-                for i=1:W(4)
-                    QX   = X1(:,:,1,i);
-                    QY   = X2(:,:,1,i);
-                    QdZ1 = dLdZ1(:,:,1,i);
-                    QdZ2 = dLdZ2(:,:,1,i);
-                    AdLdX1(:,:,1,i)=single(QdZ1 .* internal_implt_derivation(QX, QY));
-                    AdLdX2(:,:,1,i)=single(QdZ2 .* internal_implt_derivation(QY, QX));
-                end
-                dLdX1 = single(AdLdX2);
-                dLdX2 = single(AdLdX2);
+            if length(W)<=2
+                W(3)=1;
+                W(4)=1;
             end
+
+            for i=1:W(4)
+                QX   = X1(:,:,1,i);
+                QY   = X2(:,:,1,i);
+                QdZ1 = dLdZ1(:,:,1,i);
+                QdZ2 = dLdZ2(:,:,1,i);
+                AdLdX1(:,:,1,i)=single(QdZ1 .* internal_implt_derivation(QX, QY));
+                AdLdX2(:,:,1,i)=single(QdZ2 .* internal_implt_derivation(QY, QX));
+            end
+            dLdX1 = single(AdLdX2);
+            dLdX2 = single(AdLdX2);
         end
     end
 end

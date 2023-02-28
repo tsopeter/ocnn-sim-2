@@ -58,7 +58,7 @@ classdef CustomAbsoluteLayer < nnet.layer.Layer % ...
             %    parameters.
 
             % Define layer predict function here.
-            Z = abs(X1 + 1i * X2);
+            Z = sqrt(X1.^2+X2.^2);
             
         end
 
@@ -99,8 +99,8 @@ classdef CustomAbsoluteLayer < nnet.layer.Layer % ...
             %    of state parameters.
 
             % Define layer backward function here.
-            dLdX1 =  2 * X1 .* dLdZ;
-            dLdX2 = -2 * X2 .* dLdZ;
+            dLdX1 = dLdZ .* X1 ./ sqrt(X1.^2+X2.^2);
+            dLdX2 = dLdZ .* X2 ./ sqrt(X1.^2+X2.^2);
         end
     end
 end

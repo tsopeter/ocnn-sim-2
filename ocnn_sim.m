@@ -16,7 +16,6 @@ r1    = nx/6;
 r2    = nx/25;
 rate  = 1;
 
-
 digitDatasetPath = fullfile(matlabroot,'toolbox','nnet', ...
     'nndemos','nndatasets','DigitDataset');
 imds = imageDatastore(digitDatasetPath, ...

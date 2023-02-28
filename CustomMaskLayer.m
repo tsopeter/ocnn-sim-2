@@ -1,4 +1,4 @@
-classdef CustomKernelLayer < nnet.layer.Layer % ...
+classdef CustomMaskLayer < nnet.layer.Layer % ...
         % & nnet.layer.Formattable ... % (Optional) 
         % & nnet.layer.Acceleratable % (Optional)
 
@@ -6,15 +6,19 @@ classdef CustomKernelLayer < nnet.layer.Layer % ...
         % (Optional) Layer properties.
 
         % Declare layer properties here.
-        rate;
+        r1;
+        r2;
+        nx;
+        ny;
+        Nx;
+        Ny;
+        plate;
     end
 
     properties (Learnable)
         % (Optional) Layer learnable parameters.
 
         % Declare learnable parameters here.
-        real_kernel;
-        imag_kernel;
     end
 
     properties (State)
@@ -31,7 +35,7 @@ classdef CustomKernelLayer < nnet.layer.Layer % ...
     end
 
     methods
-        function layer = CustomKernelLayer(NumInputs, Name, kernel, rate)
+        function layer = CustomMaskLayer(NumInputs, Name, Nx, Ny, nx, ny, r1, r2)
             % (Optional) Create a myLayer.
             % This function must have the same name as the class.
 
@@ -39,12 +43,16 @@ classdef CustomKernelLayer < nnet.layer.Layer % ...
             layer.Name = Name;
             layer.NumInputs = NumInputs;
             layer.NumOutputs = 2;
-            layer.real_kernel = real(kernel);
-            layer.imag_kernel = imag(kernel);
-            layer.rate = rate;
+            layer.Nx = Nx;
+            layer.Ny = Ny;
+            layer.nx = nx;
+            layer.ny = ny;
+            layer.r1 = r1;
+            layer.r2 = r2;
+            layer.plate = detector_plate(Nx, Ny, nx, ny, r1, r2);
         end
         
-        function [Z1, Z2] = predict(layer,X)
+        function Z = predict(layer,X1, X2)
             % Forward input data through the layer at prediction time and
             % output the result and updated state.
             %
@@ -64,11 +72,21 @@ classdef CustomKernelLayer < nnet.layer.Layer % ...
             %    parameters.
 
             % Define layer predict function here.
-            Z1 = X .* layer.real_kernel;
-            Z2 = X .* layer.imag_kernel;
+            W = size(X1);
+            if length(W)<=2
+                W(3)=1;
+                W(4)=1;
+            end
+
+            Z = zeros(W, 'single');
+            for i=1:W(4)
+                QX = X1(:,:,1,i);
+                QY = X2(:,:,1,i);
+                Z(:,:,1,i)=sqrt(QX.^2+QY.^2).*layer.plate;
+            end
         end
 
-        function [dLdX, dLdW1, dLdW2] = backward(layer, X, Z1, Z2, dLdZ1, dLdZ2, dLdSout)
+        function [dLdX1, dLdX2] = backward(layer,X1, X2, Z1, Z2, dLdZ1, dLdZ2, dLdSout)
             % (Optional) Backward propagate the derivative of the loss
             % function through the layer.
             %
@@ -105,20 +123,20 @@ classdef CustomKernelLayer < nnet.layer.Layer % ...
             %    of state parameters.
 
             % Define layer backward function here.
-            
-            W = size(X);
+            W = size(X1);
             if length(W)<=2
                 W(3)=1;
                 W(4)=1;
             end
-            
-            dLdW1 = zeros(size(layer.real_kernel), 'single');
-            dLdW2 = zeros(size(layer.imag_kernel), 'single');
+
+            dLdX1 = zeros(W, 'single');
+            dLdX2 = zeros(W, 'single');
             for i=1:W(4)
-                dLdW1 = dLdW1 + (dLdZ1(:, :, 1, i) .* X(:,:,1,i) * layer.rate/W(4));
-                dLdW2 = dLdW2 + (dLdZ2(:, :, 1, i) .* X(:,:,1,i) * layer.rate/W(4));
+                QX = X1(:,:,1,i);
+                QY = X2(:,:,1,i);
+                dLdX1(:,:,1,i) = (QX ./sqrt(QX.^2+QY.^2)) .* layer.plate;
+                dLdX2(:,:,1,i) = (QY ./sqrt(QX.^2+QY.^2)) .* layer.plate;
             end
-            dLdX = dLdZ1;
         end
     end
 end
