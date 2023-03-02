@@ -6,13 +6,13 @@ classdef CustomAbsoluteLayer < nnet.layer.Layer % ...
         % (Optional) Layer properties.
 
         % Declare layer properties here.
+        lvalue;
     end
 
     properties (Learnable)
         % (Optional) Layer learnable parameters.
 
         % Declare learnable parameters here.
-        lvalue;
     end
 
     properties (State)
@@ -102,7 +102,7 @@ classdef CustomAbsoluteLayer < nnet.layer.Layer % ...
 
             % Define layer backward function here.
             SRT = sqrt(X1.^2+X2.^2);
-            SRT(STR==0) = realmin;
+            SRT(SRT==0) = layer.lvalue;
             dLdX1 = dLdZ .* X1 ./ SRT;
             dLdX2 = dLdZ .* X2 ./ SRT;
         end

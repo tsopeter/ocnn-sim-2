@@ -10,13 +10,13 @@ classdef CustomReLULayer < nnet.layer.Layer % ...
         sy
         sc
         sz
+        lvalue;
     end
 
     properties (Learnable)
         % (Optional) Layer learnable parameters.
 
         % Declare learnable parameters here.
-        lvalue;
     end
 
     properties (State)
