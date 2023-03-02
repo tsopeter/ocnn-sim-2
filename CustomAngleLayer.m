@@ -100,9 +100,10 @@ classdef CustomAngleLayer < nnet.layer.Layer % ...
             %    of state parameters.
 
             % Define layer backward function here.
-            common = 1/(1+(X2./X1).^2);
-            dLdX1 = dLdZ .* common .* (-X2 ./ (X1.^2));
-            dLdX2 = dLdZ .* common .* (1 / X1);
+            QX1(X1==0)=realmin;
+            common = 1/(1+(X2./QX1).^2);
+            dLdX1 = dLdZ .* common .* (-X2 ./ (QX1.^2));
+            dLdX2 = dLdZ .* common .* (1 / QX1);
         end
     end
 end

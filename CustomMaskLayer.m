@@ -1,4 +1,4 @@
-classdef CustomMaskLayer < nnet.layer.Layer  & nnet.layer.Acceleratable 
+classdef CustomMaskLayer < nnet.layer.Layer %  & nnet.layer.Acceleratable 
         % & nnet.layer.Formattable ... % (Optional) 
         % & nnet.layer.Acceleratable % (Optional)
 
@@ -76,9 +76,10 @@ classdef CustomMaskLayer < nnet.layer.Layer  & nnet.layer.Acceleratable
             if length(W)<=2
                 W(3)=1;
                 W(4)=1;
+                Z = zeros(W, 'single');
+            else
+                Z = gpuArray(zeros(W, 'single'));
             end
-
-            Z = zeros(W, 'single');
             for i=1:W(4)
                 QX = X1(:,:,1,i);
                 QY = X2(:,:,1,i);
@@ -127,15 +128,19 @@ classdef CustomMaskLayer < nnet.layer.Layer  & nnet.layer.Acceleratable
             if length(W)<=2
                 W(3)=1;
                 W(4)=1;
+                dLdX1 = zeros(W, 'single');
+                dLdX2 = zeros(W, 'single');
+            else
+                dLdX1 = gpuArray(zeros(W, 'single'));
+                dLdX2 = gpuArray(zeros(W, 'single'));
             end
-
-            dLdX1 = zeros(W, 'single');
-            dLdX2 = zeros(W, 'single');
             for i=1:W(4)
                 QX = X1(:,:,1,i);
                 QY = X2(:,:,1,i);
-                dLdX1(:,:,1,i) = (QX ./sqrt(QX.^2+QY.^2)) .* layer.plate;
-                dLdX2(:,:,1,i) = (QY ./sqrt(QX.^2+QY.^2)) .* layer.plate;
+                SRT = sqrt(QX.^2+QY.^2);
+                SRT(SRT==0) = realmin;
+                dLdX1(:,:,1,i) = (QX ./ SRT) .* layer.plate;
+                dLdX2(:,:,1,i) = (QY ./ SRT) .* layer.plate;
             end
         end
     end

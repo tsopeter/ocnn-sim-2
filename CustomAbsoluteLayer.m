@@ -99,8 +99,10 @@ classdef CustomAbsoluteLayer < nnet.layer.Layer % ...
             %    of state parameters.
 
             % Define layer backward function here.
-            dLdX1 = dLdZ .* X1 ./ sqrt(X1.^2+X2.^2);
-            dLdX2 = dLdZ .* X2 ./ sqrt(X1.^2+X2.^2);
+            SRT = sqrt(X1.^2+X2.^2);
+            SRT(STR==0) = realmin;
+            dLdX1 = dLdZ .* X1 ./ SRT;
+            dLdX2 = dLdZ .* X2 ./ SRT;
         end
     end
 end

@@ -1,4 +1,4 @@
-classdef CustomFlattenLayer < nnet.layer.Layer & nnet.layer.Acceleratable 
+classdef CustomFlattenLayer < nnet.layer.Layer 
         % & nnet.layer.Formattable ... % (Optional) 
         % & nnet.layer.Acceleratable % (Optional)
 
@@ -13,6 +13,7 @@ classdef CustomFlattenLayer < nnet.layer.Layer & nnet.layer.Acceleratable
         Nx;
         Ny;
         plate;
+        plates;
     end
 
     properties (Learnable)
@@ -50,6 +51,10 @@ classdef CustomFlattenLayer < nnet.layer.Layer & nnet.layer.Acceleratable
             layer.r1 = r1;
             layer.r2 = r2;
             layer.plate = detector_plate(Nx, Ny, nx, ny, r1, r2);
+           
+            for r=0:9
+                layer.plates(:,:,r+1)=imrotate(circle_at(Nx, Ny, nx, ny, r1, 0, r2), 36*r, 'crop');
+            end
         end
         
         function Z = predict(layer,X1)
@@ -76,11 +81,66 @@ classdef CustomFlattenLayer < nnet.layer.Layer & nnet.layer.Acceleratable
             if length(W)<=2
                 W(3)=1;
                 W(4)=1;
+                Z = zeros(1,1,10,W(4), 'single');
+            else
+                Z = gpuArray(zeros(1,1,10,W(4), 'single'));
             end
 
-            Z = dlarray(zeros(1,1,10,W(4), 'single'));
             for i=1:W(4)
                 Z(1,1,:,i)=detector_values(X1(:,:,1,i), layer.Nx, layer.Ny, layer.nx, layer.ny, layer.r1, layer.r2);
+            end
+        end
+
+        function dLdX1 = backward(layer,X1,Z,dLdZ,dLdSout)
+            % (Optional) Backward propagate the derivative of the loss
+            % function through the layer.
+            %
+            % Inputs:
+            %         layer   - Layer to backward propagate through 
+            %         X       - Layer input data 
+            %         Z       - Layer output data 
+            %         dLdZ    - Derivative of loss with respect to layer 
+            %                   output
+            %         dLdSout - (Optional) Derivative of loss with respect 
+            %                   to state output
+            %         memory  - Memory value from forward function
+            % Outputs:
+            %         dLdX   - Derivative of loss with respect to layer input
+            %         dLdW   - (Optional) Derivative of loss with respect to
+            %                  learnable parameter 
+            %         dLdSin - (Optional) Derivative of loss with respect to 
+            %                  state input
+            %
+            %  - For layers with state parameters, the backward syntax must
+            %    include both dLdSout and dLdSin, or neither.
+            %  - For layers with multiple inputs, replace X and dLdX with
+            %    X1,...,XN and dLdX1,...,dLdXN, respectively, where N is
+            %    the number of inputs.
+            %  - For layers with multiple outputs, replace Z and dlZ with
+            %    Z1,...,ZM and dLdZ,...,dLdZM, respectively, where M is the
+            %    number of outputs.
+            %  - For layers with multiple learnable parameters, replace 
+            %    dLdW with dLdW1,...,dLdWP, where P is the number of 
+            %    learnable parameters.
+            %  - For layers with multiple state parameters, replace dLdSin
+            %    and dLdSout with dLdSin1,...,dLdSinK and 
+            %    dLdSout1,...,dldSoutK, respectively, where K is the number
+            %    of state parameters.
+
+            % Define layer backward function here.
+            W = size(X1);
+            if length(W) <= 2
+                W(3)=1;
+                W(4)=1;
+                dLdX1 = zeros(W, 'single');
+            else
+                dLdX1 = gpuArray(zeros(W, 'single'));
+            end
+
+            for i=1:W(4)
+                for j=1:10
+                    dLdX1(:,:,1,i) = dLdX1(:,:,1,i) + (layer.plates(:,:,j) * dLdZ(1,1,j,i));
+                end
             end
         end
     end

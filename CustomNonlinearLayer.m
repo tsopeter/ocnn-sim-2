@@ -1,4 +1,4 @@
-classdef CustomNonlinearLayer < nnet.layer.Layer  & nnet.layer.Acceleratable  
+classdef CustomNonlinearLayer < nnet.layer.Layer % & nnet.layer.Acceleratable  
         % & nnet.layer.Formattable ... % (Optional) 
         % & nnet.layer.Acceleratable % (Optional)
 
@@ -70,12 +70,18 @@ classdef CustomNonlinearLayer < nnet.layer.Layer  & nnet.layer.Acceleratable
                 QX = X1(:,:,1,i);
                 QY = X2(:,:,1,i);
                 M = sqrt(QX.^2+QY.^2);
+                M(M==0)=realmin;
                 G = single(nonlinear_forward(M, layer.a0)./M);
                 AZ1(:,:,1,i)=single(QX .* G);
                 AZ2(:,:,1,i)=single(QY .* G);
             end
-            Z1 = single(AZ1);
-            Z2 = single(AZ2);
+            if W(4) == 1
+                Z1 = single(AZ1);
+                Z2 = single(AZ2);
+            else
+                Z1 = gpuArray(AZ1);
+                Z2 = gpuArray(AZ2);
+            end
         end
 
         function [dLdX1, dLdX2] = backward(layer,X1, X2, Z1, Z2, dLdZ1, dLdZ2, dLdSout)
@@ -115,17 +121,18 @@ classdef CustomNonlinearLayer < nnet.layer.Layer  & nnet.layer.Acceleratable
             %    of state parameters.
 
             % Define layer backward function here.
+            W = size(X1);
             function R = internal_implt_derivation(XI, YI)
                 C  = sqrt(XI.^2+YI.^2);
+                C(C==0) = realmin;
                 G  = nonlinear_backward(C, layer.a0);
                 Q  = 1 ./ C;
                 F1 = G .* Q .* XI;
                 F2 = G .* (Q + (XI.^2) .* (Q.^3));
                 R = F1 + F2;
             end
-
-            AdLdX1 = zeros(W,'single');
-            AdLdX2 = zeros(W,'single');
+            AdLdX1 = gpuArray(zeros(W,'single'));
+            AdLdX2 = gpuArray(zeros(W,'single'));
 
             if length(W)<=2
                 W(3)=1;

@@ -1,4 +1,4 @@
-classdef CustomNegationLayer < nnet.layer.Layer  & nnet.layer.Acceleratable 
+classdef CustomNegationLayer < nnet.layer.Layer % & nnet.layer.Acceleratable 
         % & nnet.layer.Formattable ... % (Optional) 
         % & nnet.layer.Acceleratable % (Optional)
 
