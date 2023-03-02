@@ -14,6 +14,7 @@ classdef CustomFlattenLayer < nnet.layer.Layer
         Ny;
         plate;
         plates;
+        lvalue;
     end
 
     properties (Learnable)
@@ -36,7 +37,7 @@ classdef CustomFlattenLayer < nnet.layer.Layer
     end
 
     methods
-        function layer = CustomFlattenLayer(NumInputs, Name, Nx, Ny, nx, ny, r1, r2)
+        function layer = CustomFlattenLayer(NumInputs, Name, Nx, Ny, nx, ny, r1, r2, lvalue)
             % (Optional) Create a myLayer.
             % This function must have the same name as the class.
 
@@ -50,10 +51,11 @@ classdef CustomFlattenLayer < nnet.layer.Layer
             layer.ny = ny;
             layer.r1 = r1;
             layer.r2 = r2;
-            layer.plate = detector_plate(Nx, Ny, nx, ny, r1, r2);
+            layer.lvalue = lvalue;
+            layer.plate = detector_plate(Nx, Ny, nx, ny, r1, r2, lvalue);
            
             for r=0:9
-                layer.plates(:,:,r+1)=imrotate(circle_at(Nx, Ny, nx, ny, r1, 0, r2), 36*r, 'crop');
+                layer.plates(:,:,r+1)=imrotate(circle_at(Nx, Ny, nx, ny, r1, 0, r2, lvalue), 36*r, 'crop');
             end
         end
         
@@ -87,7 +89,7 @@ classdef CustomFlattenLayer < nnet.layer.Layer
             end
 
             for i=1:W(4)
-                Z(1,1,:,i)=detector_values(X1(:,:,1,i), layer.Nx, layer.Ny, layer.nx, layer.ny, layer.r1, layer.r2);
+                Z(1,1,:,i)=detector_values(X1(:,:,1,i), layer.Nx, layer.Ny, layer.nx, layer.ny, layer.r1, layer.r2, layer.lvalue);
             end
         end
 

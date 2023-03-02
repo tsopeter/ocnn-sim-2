@@ -7,6 +7,7 @@ classdef CustomNonlinearLayer < nnet.layer.Layer % & nnet.layer.Acceleratable
 
         % Declare layer properties here.
         a0 = 20;
+        lvalue;
     end
 
     properties (Learnable)
@@ -29,7 +30,7 @@ classdef CustomNonlinearLayer < nnet.layer.Layer % & nnet.layer.Acceleratable
     end
 
     methods
-        function layer = CustomNonlinearLayer(NumInputs, Name)
+        function layer = CustomNonlinearLayer(NumInputs, Name, lvalue)
             % (Optional) Create a myLayer.
             % This function must have the same name as the class.
 
@@ -37,6 +38,7 @@ classdef CustomNonlinearLayer < nnet.layer.Layer % & nnet.layer.Acceleratable
             layer.Name = Name;
             layer.NumInputs = NumInputs;
             layer.NumOutputs = 2;
+            layer.lvalue = lvalue;
         end
         
         function [Z1, Z2] = predict(layer,X1, X2)
@@ -70,7 +72,7 @@ classdef CustomNonlinearLayer < nnet.layer.Layer % & nnet.layer.Acceleratable
                 QX = X1(:,:,1,i);
                 QY = X2(:,:,1,i);
                 M = sqrt(QX.^2+QY.^2);
-                M(M==0)=realmin;
+                M(M==0) = layer.lvalue;
                 G = single(nonlinear_forward(M, layer.a0)./M);
                 AZ1(:,:,1,i)=single(QX .* G);
                 AZ2(:,:,1,i)=single(QY .* G);
@@ -124,7 +126,7 @@ classdef CustomNonlinearLayer < nnet.layer.Layer % & nnet.layer.Acceleratable
             W = size(X1);
             function R = internal_implt_derivation(XI, YI)
                 C  = sqrt(XI.^2+YI.^2);
-                C(C==0) = realmin;
+                C(C==0) = layer.lvalue;
                 G  = nonlinear_backward(C, layer.a0);
                 Q  = 1 ./ C;
                 F1 = G .* Q .* XI;

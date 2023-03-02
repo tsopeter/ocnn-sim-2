@@ -13,6 +13,7 @@ classdef CustomMaskLayer < nnet.layer.Layer %  & nnet.layer.Acceleratable
         Nx;
         Ny;
         plate;
+        lvalue;
     end
 
     properties (Learnable)
@@ -35,7 +36,7 @@ classdef CustomMaskLayer < nnet.layer.Layer %  & nnet.layer.Acceleratable
     end
 
     methods
-        function layer = CustomMaskLayer(NumInputs, Name, Nx, Ny, nx, ny, r1, r2)
+        function layer = CustomMaskLayer(NumInputs, Name, Nx, Ny, nx, ny, r1, r2, lvalue)
             % (Optional) Create a myLayer.
             % This function must have the same name as the class.
 
@@ -49,7 +50,8 @@ classdef CustomMaskLayer < nnet.layer.Layer %  & nnet.layer.Acceleratable
             layer.ny = ny;
             layer.r1 = r1;
             layer.r2 = r2;
-            layer.plate = detector_plate(Nx, Ny, nx, ny, r1, r2);
+            layer.lvalue = lvalue;
+            layer.plate = detector_plate(Nx, Ny, nx, ny, r1, r2, lvalue);
         end
         
         function Z = predict(layer,X1, X2)
@@ -138,7 +140,7 @@ classdef CustomMaskLayer < nnet.layer.Layer %  & nnet.layer.Acceleratable
                 QX = X1(:,:,1,i);
                 QY = X2(:,:,1,i);
                 SRT = sqrt(QX.^2+QY.^2);
-                SRT(SRT==0) = realmin;
+                SRT(SRT==0) = layer.lvalue;
                 dLdX1(:,:,1,i) = (QX ./ SRT) .* layer.plate;
                 dLdX2(:,:,1,i) = (QY ./ SRT) .* layer.plate;
             end

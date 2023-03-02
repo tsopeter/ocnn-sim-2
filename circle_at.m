@@ -1,5 +1,6 @@
-function output = circle_at(Nx, Ny, nx, ny, x, y, radius)
-    output = (zeros(Ny, Nx, 'single'));
+function output = circle_at(Nx, Ny, nx, ny, x, y, radius, lvalue)
+    output = (ones(Ny, Nx, 'single'));
+    output = output .* lvalue;
 
     dimx = nx/Nx;
     dimy = ny/Ny;

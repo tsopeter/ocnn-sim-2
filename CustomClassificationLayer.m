@@ -30,5 +30,9 @@ classdef CustomClassificationLayer < nnet.layer.ClassificationLayer % ...
             % Layer forward loss function goes here.
             loss = 0.5 * (T - Y).^2;
         end
+
+        function dYdL = backwardLoss(layer, Y, T)
+            dYdL = Y - L;
+        end
     end
 end
