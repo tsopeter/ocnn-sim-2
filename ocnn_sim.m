@@ -8,14 +8,16 @@ ix     = round(Nx/ratio);
 iy     = round(Ny/ratio);
 nx     = 21e-3;
 ny     = 21e-3;
-d1     = 50e-2;
+d1     = 15e-2;
 d2     = 15e-2;
 wv     = 1550e-9;
 a0     = 20;
-r1     = nx/6;
-r2     = nx/25;
+r1     = nx/4;
+r2     = nx/20;
 rate   = 1;
-lvalue = 1e-6;
+learningRate = 1e-5;
+numTrainFiles = 950;
+lvalue = 1e-9;
 sx     = 2;
 sy     = 1;
 sc     = 0.1;
@@ -31,8 +33,6 @@ imds = imageDatastore(digitDatasetPath, ...
 img = readimage(imds, 1);
 [dimx, dimy] = size(img);
 
-
-numTrainFiles = 750;
 [imdsTrain, imdsValidation] = splitEachLabel(imds, numTrainFiles, 'randomize');
 
 % get the interpolation value k
@@ -42,8 +42,8 @@ ky = log2(double(iy - dimx)/double(dimx - 1))+1;
 % get the lowest interpolation value
 k = min(kx, ky);
 
-w1 = get_propagation_distance(ix, iy, nx/ratio, ny/ratio, d1, wv);
-w2 = get_propagation_distance(ix, iy, nx/ratio, ny/ratio, d2, wv);
+w1 = fftshift(get_propagation_distance(ix, iy, nx/ratio, ny/ratio, d1, wv));
+w2 = fftshift(get_propagation_distance(ix, iy, nx/ratio, ny/ratio, d2, wv));
 
 kernel = internal_random_amp(Nx, Ny);
 
@@ -126,7 +126,7 @@ layers = [
     Classification];
 
 options = trainingOptions('sgdm', ...
-    'InitialLearnRate',1e-10, ...
+    'InitialLearnRate',learningRate, ...
     'MaxEpochs',4, ...
     'Shuffle','every-epoch', ...
     'ValidationData',imdsValidation, ...
