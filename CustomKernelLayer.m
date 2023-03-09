@@ -106,18 +106,22 @@ classdef CustomKernelLayer < nnet.layer.Layer %  & nnet.layer.Acceleratable
 
             % Define layer backward function here.
             
-            W = size(X);
+            W = size(dLdZ1);
             if length(W)<=2
                 W(3)=1;
                 W(4)=1;
             end
-            
-            dLdW1 = zeros(size(layer.real_kernel), 'single');
-            dLdW2 = zeros(size(layer.imag_kernel), 'single');
+
+            dLdW1  = zeros(size(layer.real_kernel), 'single');
+            dLdW2  = zeros(size(layer.imag_kernel), 'single');
             for i=1:W(4)
-                dLdW1 = dLdW1 + (dLdZ1(:, :, 1, i) .* X(:,:,1,i) * layer.rate/W(4));
-                dLdW2 = dLdW2 + (dLdZ2(:, :, 1, i) .* X(:,:,1,i) * layer.rate/W(4));
+                for channel=1:W(3)
+                    dLdW1 = dLdW1 + (dLdZ1(:, :, channel, i) .* X(:,:,1,i) * layer.rate);
+                    dLdW2 = dLdW2 + (dLdZ2(:, :, channel, i) .* X(:,:,1,i) * layer.rate);
+                end
             end
+            %dLdW1 = dLdW1 ./ (W(3) * W(4));
+            %dLdW2 = dLdW2 ./ (W(3) * W(4));
             dLdX = dLdZ1;
         end
     end

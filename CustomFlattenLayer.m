@@ -57,6 +57,7 @@ classdef CustomFlattenLayer < nnet.layer.Layer
             for r=0:9
                 layer.plates(:,:,r+1)=imrotate(circle_at(Nx, Ny, nx, ny, r1, 0, r2, lvalue), 36*r, 'crop');
             end
+            layer.plates(layer.plates==0)=layer.lvalue;
         end
         
         function Z = predict(layer,X1)
@@ -89,7 +90,9 @@ classdef CustomFlattenLayer < nnet.layer.Layer
             end
 
             for i=1:W(4)
-                Z(1,1,:,i)=detector_values(X1(:,:,1,i), layer.Nx, layer.Ny, layer.nx, layer.ny, layer.r1, layer.r2, layer.lvalue);
+                for r=0:9
+                    Z(1,1,r+1,i)=sum(sum(X1(:,:,1,i).*layer.plates(:,:,r+1)));
+                end
             end
         end
 
@@ -129,7 +132,30 @@ classdef CustomFlattenLayer < nnet.layer.Layer
             %    dLdSout1,...,dldSoutK, respectively, where K is the number
             %    of state parameters.
 
-            % Define layer backward function here.
+            % Define layer backward function here
+            % 
+            % The input data X
+            % comes in as
+            % [X][Y][1][N]
+            %
+            %
+            % The input dLdZ data comes as
+            % [1][1][10][N]
+            % 
+            % We want the output dLdX1
+            % to be in
+            % [X][Y][10][N]%
+            %
+            % Each output Z is defined as 
+            %    Z(i) = [zi1, zi2, zi3, ..., zi10]T
+            %
+            %
+            %    where Zij = sum(sum(X.*plate(j)));
+            %
+            %
+            %
+            %
+            % .
             W = size(X1);
             if length(W) <= 2
                 W(3)=1;

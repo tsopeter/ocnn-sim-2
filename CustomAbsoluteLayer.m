@@ -101,6 +101,17 @@ classdef CustomAbsoluteLayer < nnet.layer.Layer % ...
             %    of state parameters.
 
             % Define layer backward function here.
+            %
+            % Input data X1, X2
+            % comes as [X][Y][1][N]
+            %
+            % dLdZ comes as [X][Y][10][N]
+            % where each [10] is a separate digit.
+            %
+            %
+            %
+            % We want to multiply each dLdZ [X][Y] by SRT
+            %
             SRT = sqrt(X1.^2+X2.^2);
             SRT(SRT==0) = layer.lvalue;
             dLdX1 = dLdZ .* X1 ./ SRT;

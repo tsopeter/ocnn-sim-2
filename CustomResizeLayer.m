@@ -10,6 +10,7 @@ classdef CustomResizeLayer < nnet.layer.Layer % ...
         Ny
         k
         lvalue
+        P
     end
 
     properties (Learnable)
@@ -32,7 +33,7 @@ classdef CustomResizeLayer < nnet.layer.Layer % ...
     end
 
     methods
-        function layer = CustomResizeLayer(NumInputs, Name, Nx, Ny, k, lvalue)
+        function layer = CustomResizeLayer(NumInputs, Name, Nx, Ny, k, lvalue, P)
             % (Optional) Create a myLayer.
             % This function must have the same name as the class.
 
@@ -44,6 +45,7 @@ classdef CustomResizeLayer < nnet.layer.Layer % ...
             layer.Ny = Ny;
             layer.k  = k;
             layer.lvalue = lvalue;
+            layer.P = P;
         end
         
         function Z = predict(layer,X)
@@ -67,7 +69,7 @@ classdef CustomResizeLayer < nnet.layer.Layer % ...
 
             % Define layer predict function here.
             W = size(X);
-            Z = (resize_normalize_extend(X, layer.Nx, layer.Ny, layer.k, layer.lvalue));
+            Z = (resize_normalize_extend(X, layer.Nx, layer.Ny, layer.k, layer.lvalue)) * layer.P;
             if length(W) > 2
                 Z = gpuArray(Z);
             end

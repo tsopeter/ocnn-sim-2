@@ -8,16 +8,17 @@ ix     = round(Nx/ratio);
 iy     = round(Ny/ratio);
 nx     = 21e-3;
 ny     = 21e-3;
-d1     = 15e-2;
-d2     = 15e-2;
+d1     = 50e-2;
+d2     = 50e-2;
 wv     = 1550e-9;
 a0     = 20;
 r1     = nx/4;
 r2     = nx/20;
-rate   = 1;
-learningRate = 1e-5;
+rate   = 1;     %% rate of addition in KERNEL layer
+learningRate = 0.00005;
 numTrainFiles = 950;
-lvalue = 1e-9;
+lvalue = 1e-20;
+P      = 10;
 sx     = 2;
 sy     = 1;
 sc     = 0.1;
@@ -48,7 +49,7 @@ w2 = fftshift(get_propagation_distance(ix, iy, nx/ratio, ny/ratio, d2, wv));
 kernel = internal_random_amp(Nx, Ny);
 
 InputLayer  = imageInputLayer([dimx, dimy, 1], 'Name', 'input_layer', 'Normalization', 'rescale-zero-one');
-ResizeLayer = CustomResizeLayer(1, 'resize_layer', Nx, Ny, k, lvalue);
+ResizeLayer = CustomResizeLayer(1, 'resize_layer', Nx, Ny, k, lvalue, P);
 KernelLayer = CustomKernelLayer(1, 'kernel_layer', kernel, rate);
 
 RealProp1LayerA = convolution2dLayer([ix, iy], 1, 'Padding','same', 'PaddingValue', lvalue, 'Bias', 0, 'WeightLearnRateFactor', 0, 'BiasInitializer','zeros', 'Weights', real(w1), 'Name', 'real_prop_1_conv2d_layer_A');
@@ -163,6 +164,9 @@ lgraph = connectLayers(lgraph, 'real_prop_1_conv2d_layer_C', 'imag_addition_laye
 %lgraph = connectLayers(lgraph, 'imag_addition_layer_1', 'absolute_layer/in2');
 %lgraph = connectLayers(lgraph, 'absolute_layer', 'nonlinear_layer');
 
+%lgraph  = connectLayers(lgraph, 'batch_norm_1A', 'nonlinear_layer/in1');
+%lgraph  = connectLayers(lgraph, 'batch_norm_1B', 'nonlinear_layer/in2');
+
 lgraph = connectLayers(lgraph, 'real_addition_layer_1', 'nonlinear_layer/in1');
 lgraph = connectLayers(lgraph, 'imag_addition_layer_1', 'nonlinear_layer/in2');
 
@@ -188,8 +192,8 @@ lgraph = connectLayers(lgraph, 'real_prop_2_conv2d_layer_C', 'imag_addition_laye
 %lgraph = connectLayers(lgraph, 'imag_addition_layer_2', 'batch_norm_2B');
 
 % Mask
-%lgraph = connectLayers(lgraph, 'batch_norm_2A', 'mask_layer/in1');
-%lgraph = connectLayers(lgraph, 'batch_norm_2B', 'mask_layer/in2');
+%lgraph = connectLayers(lgraph, 'batch_norm_2A', 'absolute_layer/in1');
+%lgraph = connectLayers(lgraph, 'batch_norm_2B', 'absolute_layer/in2');
 
 %lgraph = connectLayers(lgraph, 'real_addition_layer_2', 'mask_layer/in1');
 %lgraph = connectLayers(lgraph, 'imag_addition_layer_2', 'mask_layer/in2');

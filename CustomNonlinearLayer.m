@@ -121,18 +121,16 @@ classdef CustomNonlinearLayer < nnet.layer.Layer % & nnet.layer.Acceleratable
             %    and dLdSout with dLdSin1,...,dLdSinK and 
             %    dLdSout1,...,dldSoutK, respectively, where K is the number
             %    of state parameters.
+            %
+            %
+            % Input dLdZ comes in as [X][Y][10][N]
+            % We want each channel [1-10] to be
+            % dLidX = f'(X,Y)./abs(X+Yi)...
+            %
+            %
 
             % Define layer backward function here.
-            W = size(X1);
-            function R = internal_implt_derivation(XI, YI)
-                C  = sqrt(XI.^2+YI.^2);
-                C(C==0) = layer.lvalue;
-                G  = nonlinear_backward(C, layer.a0);
-                Q  = 1 ./ C;
-                F1 = G .* Q .* XI;
-                F2 = G .* (Q + (XI.^2) .* (Q.^3));
-                R = F1 + F2;
-            end
+            W = size(dLdZ1);
             AdLdX1 = gpuArray(zeros(W,'single'));
             AdLdX2 = gpuArray(zeros(W,'single'));
 
@@ -144,10 +142,27 @@ classdef CustomNonlinearLayer < nnet.layer.Layer % & nnet.layer.Acceleratable
             for i=1:W(4)
                 QX   = X1(:,:,1,i);
                 QY   = X2(:,:,1,i);
-                QdZ1 = dLdZ1(:,:,1,i);
-                QdZ2 = dLdZ2(:,:,1,i);
-                AdLdX1(:,:,1,i)=single(QdZ1 .* internal_implt_derivation(QX, QY));
-                AdLdX2(:,:,1,i)=single(QdZ2 .* internal_implt_derivation(QY, QX));
+
+                %
+                %
+                % common terms
+                C       = sqrt(QX.^2+QY.^2);
+                C(C==0) = layer.lvalue;
+                Cinv    = 1 ./ C;
+
+                Common1 = nonlinear_forward(C, layer.a0);
+                Common2 = Common1 .* Cinv;
+                Common3 = nonlinear_backward(C, layer.a0) .* Cinv;
+
+                dZ1dX1 = Common2 + QX .* (Common3 .* QX .* Cinv + QX .* Cinv .* Common1);
+                dZ1dX2 = QX .* (Common3 .* QY .* Cinv + QY .* Common2);
+
+                dZ2dX1 = QY .* (Common3 .* QX .* Cinv + QX .* Common2);
+                dZ2dX2 = Common2 + QY .* (Common3 .* QY .* Cinv + QY .* Cinv .* Common1);
+
+
+                AdLdX1(:,:,1,i)=dLdZ1(:,:,1,i) .* dZ1dX1 + dLdZ2(:,:,1,i) .* dZ2dX1;
+                AdLdX2(:,:,1,i)=dLdZ1(:,:,1,i) .* dZ1dX2 + dLdZ2(:,:,1,i) .* dZ2dX2;
             end
             dLdX1 = single(AdLdX1);
             dLdX2 = single(AdLdX2);
