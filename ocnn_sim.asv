@@ -99,9 +99,9 @@ layers = [
     %RealProp1LayerC
     %ImagProp1LayerD
 
-    %Negation1Layer
-    %Addition1LayerA
-    %Addition1LayerB
+    Negation1Layer
+    Addition1LayerA
+    Addition1LayerB
 
     %NormalizationLayer1A
     %NormalizationLayer1B
@@ -154,8 +154,8 @@ lgraph = connectLayers(lgraph, 'resize_layer', 'kernel_layer');
 %lgraph = connectLayers(lgraph, 'negation_layer_1', 'real_addition_layer_1/in2');
 
 % Imag
-%lgraph = connectLayers(lgraph, 'imag_prop_1_conv2d_layer_B', 'imag_addition_layer_1/in1');
-%lgraph = connectLayers(lgraph, 'real_prop_1_conv2d_layer_C', 'imag_addition_layer_1/in2');
+lgraph = connectLayers(lgraph, 'imag_prop_1_conv2d_layer_B', 'imag_addition_layer_1/in1');
+lgraph = connectLayers(lgraph, 'real_prop_1_conv2d_layer_C', 'imag_addition_layer_1/in2');
 
 %lgraph = connectLayers(lgraph, 'real_addition_layer_1', 'batch_norm_1A');
 %lgraph = connectLayers(lgraph, 'imag_addition_layer_1', 'batch_norm_1B');
@@ -167,11 +167,8 @@ lgraph = connectLayers(lgraph, 'resize_layer', 'kernel_layer');
 %lgraph  = connectLayers(lgraph, 'batch_norm_1A', 'nonlinear_layer/in1');
 %lgraph  = connectLayers(lgraph, 'batch_norm_1B', 'nonlinear_layer/in2');
 
-%lgraph = connectLayers(lgraph, 'real_addition_layer_1', 'nonlinear_layer/in1');
-%lgraph = connectLayers(lgraph, 'imag_addition_layer_1', 'nonlinear_layer/in2');
-
-lgraph = connectLayers(lgraph, 'kernel_layer/out1', 'nonlinear_layer/in1');
-lgraph = connectLayers(lgraph, 'kernel_layer/out2', 'nonlinear_layer/in2');
+lgraph = connectLayers(lgraph, 'real_addition_layer_1', 'nonlinear_layer/in1');
+lgraph = connectLayers(lgraph, 'imag_addition_layer_1', 'nonlinear_layer/in2');
 
 % Nonlinear layer
 %lgraph = connectLayers(lgraph, 'batch_norm_1A', 'nonlinear_layer/in1');
