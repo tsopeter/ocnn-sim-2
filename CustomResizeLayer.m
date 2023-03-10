@@ -75,6 +75,33 @@ classdef CustomResizeLayer < nnet.layer.Layer % ...
             end
         end
 
+        function [Z, state] = forward(layer,X)
+            % (Optional) Forward input data through the layer at training
+            % time and output the result, the updated state, and a memory
+            % value.
+            %
+            % Inputs:
+            %         layer - Layer to forward propagate through 
+            %         X     - Layer input data
+            % Outputs:
+            %         Z      - Output of layer forward function 
+            %         state  - (Optional) Updated layer state 
+            %         memory - (Optional) Memory value for custom backward
+            %                  function
+            %
+            %  - For layers with multiple inputs, replace X with X1,...,XN, 
+            %    where N is the number of inputs.
+            %  - For layers with multiple outputs, replace Z with 
+            %    Z1,...,ZM, where M is the number of outputs.
+            %  - For layers with multiple state parameters, replace state 
+            %    with state1,...,stateK, where K is the number of state 
+            %    parameters.
+
+            % Define layer forward function here.
+            Z = layer.predict(X);
+            state = 0;
+        end
+
         function dLdX = backward(layer,X,Z,dLdZ,dLdSout)
             % (Optional) Backward propagate the derivative of the loss
             % function through the layer.
@@ -112,7 +139,24 @@ classdef CustomResizeLayer < nnet.layer.Layer % ...
             %    of state parameters.
 
             % Define layer backward function here.
-            dLdX = dLdZ;
+            T = size(interp2(X(:,:,1,1), layer.k));
+            W = size(dLdZ);
+            if length(W) <= 2
+                W(3)=1;
+                W(4)=1;
+            end
+            stx  = layer.Nx/2 - round(T(1)/2);
+            endx = layer.Nx/2 + round(T(1)/2);
+            sty  = layer.Ny/2 - round(T(2)/2);
+            endy = layer.Ny/2 + round(T(2)/2);
+            AZ   = dLdZ(stx:endx,sty:endy,:,:);
+            dLdX = zeros(size(X), 'single');
+            xq = (0:(T(1)/W(1)):T(1))';
+            yq = (0:(T(2)/W(2)):T(2))';
+            for i=1:W(4)
+                F = griddedInterpolant({T(1), T(2)}, AZ(:,:,1,i));
+                dLdX(:,:,1,i)=F({xq, yq});
+            end
         end
     end
 end

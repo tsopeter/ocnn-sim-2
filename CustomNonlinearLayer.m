@@ -72,6 +72,7 @@ classdef CustomNonlinearLayer < nnet.layer.Layer % & nnet.layer.Acceleratable
                 QX = X1(:,:,1,i);
                 QY = X2(:,:,1,i);
                 M = sqrt(QX.^2+QY.^2);
+
                 M(M==0) = layer.lvalue;
                 G = single(nonlinear_forward(M, layer.a0)./M);
                 AZ1(:,:,1,i)=single(QX .* G);
@@ -84,6 +85,33 @@ classdef CustomNonlinearLayer < nnet.layer.Layer % & nnet.layer.Acceleratable
                 Z1 = gpuArray(AZ1);
                 Z2 = gpuArray(AZ2);
             end
+        end
+
+        function [Z1, Z2, state] = forward(layer,X1, X2)
+            % (Optional) Forward input data through the layer at training
+            % time and output the result, the updated state, and a memory
+            % value.
+            %
+            % Inputs:
+            %         layer - Layer to forward propagate through 
+            %         X     - Layer input data
+            % Outputs:
+            %         Z      - Output of layer forward function 
+            %         state  - (Optional) Updated layer state 
+            %         memory - (Optional) Memory value for custom backward
+            %                  function
+            %
+            %  - For layers with multiple inputs, replace X with X1,...,XN, 
+            %    where N is the number of inputs.
+            %  - For layers with multiple outputs, replace Z with 
+            %    Z1,...,ZM, where M is the number of outputs.
+            %  - For layers with multiple state parameters, replace state 
+            %    with state1,...,stateK, where K is the number of state 
+            %    parameters.
+
+            % Define layer forward function here.
+            [Z1, Z2] = layer.predict(X1, X2);
+            state = 0;
         end
 
         function [dLdX1, dLdX2] = backward(layer,X1, X2, Z1, Z2, dLdZ1, dLdZ2, dLdSout)

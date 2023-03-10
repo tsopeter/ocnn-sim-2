@@ -1,4 +1,4 @@
-classdef CustomKernelLayer < nnet.layer.Layer %  & nnet.layer.Acceleratable 
+classdef CustomResizeLayer < nnet.layer.Layer % ...
         % & nnet.layer.Formattable ... % (Optional) 
         % & nnet.layer.Acceleratable % (Optional)
 
@@ -6,15 +6,17 @@ classdef CustomKernelLayer < nnet.layer.Layer %  & nnet.layer.Acceleratable
         % (Optional) Layer properties.
 
         % Declare layer properties here.
-        rate;
+        Nx
+        Ny
+        k
+        lvalue
+        P
     end
 
     properties (Learnable)
         % (Optional) Layer learnable parameters.
 
         % Declare learnable parameters here.
-        real_kernel;
-        imag_kernel;
     end
 
     properties (State)
@@ -31,20 +33,22 @@ classdef CustomKernelLayer < nnet.layer.Layer %  & nnet.layer.Acceleratable
     end
 
     methods
-        function layer = CustomKernelLayer(NumInputs, Name, kernel, rate)
+        function layer = CustomResizeLayer(NumInputs, Name, Nx, Ny, k, lvalue, P)
             % (Optional) Create a myLayer.
             % This function must have the same name as the class.
 
             % Define layer constructor function here.
             layer.Name = Name;
             layer.NumInputs = NumInputs;
-            layer.NumOutputs = 2;
-            layer.real_kernel = real(kernel);
-            layer.imag_kernel = imag(kernel);
-            layer.rate = rate;
+            layer.NumOutputs = 1;
+            layer.Nx = Nx;
+            layer.Ny = Ny;
+            layer.k  = k;
+            layer.lvalue = lvalue;
+            layer.P = P;
         end
         
-        function [Z1, Z2] = predict(layer,X)
+        function Z = predict(layer,X)
             % Forward input data through the layer at prediction time and
             % output the result and updated state.
             %
@@ -64,11 +68,14 @@ classdef CustomKernelLayer < nnet.layer.Layer %  & nnet.layer.Acceleratable
             %    parameters.
 
             % Define layer predict function here.
-            Z1 = X .* layer.real_kernel;
-            Z2 = X .* layer.imag_kernel;
+            W = size(X);
+            Z = (resize_normalize_extend(X, layer.Nx, layer.Ny, layer.k, layer.lvalue)) * layer.P;
+            if length(W) > 2
+                Z = gpuArray(Z);
+            end
         end
 
-        function [Z1, Z2, state] = forward(layer,X)
+        function [Z, state] = forward(layer,X)
             % (Optional) Forward input data through the layer at training
             % time and output the result, the updated state, and a memory
             % value.
@@ -91,11 +98,11 @@ classdef CustomKernelLayer < nnet.layer.Layer %  & nnet.layer.Acceleratable
             %    parameters.
 
             % Define layer forward function here.
-            [Z1, Z2] = layer.predict(X);
+            Z = layer.predict(X);
             state = 0;
         end
 
-        function [dLdX, dLdW1, dLdW2] = backward(layer, X, Z1, Z2, dLdZ1, dLdZ2, dLdSout)
+        function dLdX = backward(layer,X,Z,dLdZ,dLdSout)
             % (Optional) Backward propagate the derivative of the loss
             % function through the layer.
             %
@@ -132,24 +139,19 @@ classdef CustomKernelLayer < nnet.layer.Layer %  & nnet.layer.Acceleratable
             %    of state parameters.
 
             % Define layer backward function here.
-            
-            W = size(dLdZ1);
-            if length(W)<=2
-                W(3)=1;
-                W(4)=1;
-            end
-
-            dLdW1  = zeros(size(layer.real_kernel), 'single');
-            dLdW2  = zeros(size(layer.imag_kernel), 'single');
+            T = size(interp2(X(:,:,1,1), layer.k));
+            W = size(dLdZ);
+            stx  = layer.Nx/2 - round(T(1)/2);
+            endx = layer.Nx/2 + round(T(1)/2);
+            sty  = layer.Ny/2 - round(T(2)/2);
+            endy = layer.Ny/2 + round(T(2)/2);
+            AZ   = dLdZ(stx:endx,sty:endy,:,:);
+            dLdX = zeros(size(X), 'single');
+            xq = 0:T()
             for i=1:W(4)
-                for channel=1:W(3)
-                    dLdW1 = dLdW1 + (dLdZ1(:, :, channel, i) .* X(:,:,1,i) * layer.rate);
-                    dLdW2 = dLdW2 + (dLdZ2(:, :, channel, i) .* X(:,:,1,i) * layer.rate);
-                end
+                F = griddedInterpolant({T(1), T(2)}, AZ(:,:,1,i));
+                dLdX(:,:,1,i)=F({})
             end
-            %dLdW1 = dLdW1 ./ (W(3) * W(4));
-            %dLdW2 = dLdW2 ./ (W(3) * W(4));
-            dLdX = dLdZ1;
         end
     end
 end
