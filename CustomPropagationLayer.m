@@ -58,9 +58,9 @@ classdef CustomPropagationLayer < nnet.layer.Layer
 
             layer.Rw         = fft2(real(layer.w));
             layer.Iw         = fft2(imag(layer.w));
-            layer.Rwq        = fft2(real(layer.w.'));
-            layer.Iwq        = fft2(imag(layer.w.'));
-            layer.nIwq       = fft2(imag((-1 * layer.w).'));
+            layer.Rwq        = fft2(real(layer.w).');
+            layer.Iwq        = fft2(imag(layer.w).');
+            layer.nIwq       = fft2(imag(-1 * layer.w).');
         end
         
         function [Z1, Z2] = predict(layer, R, I)
@@ -103,59 +103,59 @@ classdef CustomPropagationLayer < nnet.layer.Layer
             end
         end
 
-        function [dLdR, dLdI] = backward(layer, R, I, Z1, Z2, dLdZ1, dLdZ2, dLdSout)
-            % (Optional) Backward propagate the derivative of the loss
-            % function through the layer.
-            %
-            % Inputs:
-            %         layer   - Layer to backward propagate through 
-            %         X       - Layer input data 
-            %         Z       - Layer output data 
-            %         dLdZ    - Derivative of loss with respect to layer 
-            %                   output
-            %         dLdSout - (Optional) Derivative of loss with respect 
-            %                   to state output
-            %         memory  - Memory value from forward function
-            % Outputs:
-            %         dLdX   - Derivative of loss with respect to layer input
-            %         dLdW   - (Optional) Derivative of loss with respect to
-            %                  learnable parameter 
-            %         dLdSin - (Optional) Derivative of loss with respect to 
-            %                  state input
-            %
-            %  - For layers with state parameters, the backward syntax must
-            %    include both dLdSout and dLdSin, or neither.
-            %  - For layers with multiple inputs, replace X and dLdX with
-            %    X1,...,XN and dLdX1,...,dLdXN, respectively, where N is
-            %    the number of inputs.
-            %  - For layers with multiple outputs, replace Z and dlZ with
-            %    Z1,...,ZM and dLdZ,...,dLdZM, respectively, where M is the
-            %    number of outputs.
-            %  - For layers with multiple learnable parameters, replace 
-            %    dLdW with dLdW1,...,dLdWP, where P is the number of 
-            %    learnable parameters.
-            %  - For layers with multiple state parameters, replace dLdSin
-            %    and dLdSout with dLdSin1,...,dLdSinK and 
-            %    dLdSout1,...,dldSoutK, respectively, where K is the number
-            %    of state parameters.
-
-            % Define layer backward function here.
-            W  = size(R);
-
-            if length(W) <= 2
-                W(3) = 1;
-                W(4) = 1;
-            end
-
-            dLdR = zeros(W, 'like', dLdZ1);
-            dLdI = zeros(W, 'like', dLdZ2);
-
-            for i=1:W(4)
-                dLdR(:,:,1,i) = dlfft2(dLdZ1(:,:,1,i), layer.Rwq)  + dlfft2(dLdZ2(:,:,1,i), layer.Iwq);
-                dLdI(:,:,1,i) = dlfft2(dLdZ1(:,:,1,i), layer.nIwq) + dlfft2(dLdZ2(:,:,1,i), layer.Rwq);
-            end
-
-        end
+%         function [dLdR, dLdI] = backward(layer, R, I, Z1, Z2, dLdZ1, dLdZ2, dLdSout)
+%             % (Optional) Backward propagate the derivative of the loss
+%             % function through the layer.
+%             %
+%             % Inputs:
+%             %         layer   - Layer to backward propagate through 
+%             %         X       - Layer input data 
+%             %         Z       - Layer output data 
+%             %         dLdZ    - Derivative of loss with respect to layer 
+%             %                   output
+%             %         dLdSout - (Optional) Derivative of loss with respect 
+%             %                   to state output
+%             %         memory  - Memory value from forward function
+%             % Outputs:
+%             %         dLdX   - Derivative of loss with respect to layer input
+%             %         dLdW   - (Optional) Derivative of loss with respect to
+%             %                  learnable parameter 
+%             %         dLdSin - (Optional) Derivative of loss with respect to 
+%             %                  state input
+%             %
+%             %  - For layers with state parameters, the backward syntax must
+%             %    include both dLdSout and dLdSin, or neither.
+%             %  - For layers with multiple inputs, replace X and dLdX with
+%             %    X1,...,XN and dLdX1,...,dLdXN, respectively, where N is
+%             %    the number of inputs.
+%             %  - For layers with multiple outputs, replace Z and dlZ with
+%             %    Z1,...,ZM and dLdZ,...,dLdZM, respectively, where M is the
+%             %    number of outputs.
+%             %  - For layers with multiple learnable parameters, replace 
+%             %    dLdW with dLdW1,...,dLdWP, where P is the number of 
+%             %    learnable parameters.
+%             %  - For layers with multiple state parameters, replace dLdSin
+%             %    and dLdSout with dLdSin1,...,dLdSinK and 
+%             %    dLdSout1,...,dldSoutK, respectively, where K is the number
+%             %    of state parameters.
+% 
+%             % Define layer backward function here.
+%             W  = size(R);
+% 
+%             if length(W) <= 2
+%                 W(3) = 1;
+%                 W(4) = 1;
+%             end
+% 
+%             dLdR = zeros(W, 'like', dLdZ1);
+%             dLdI = zeros(W, 'like', dLdZ2);
+% 
+%             for i=1:W(4)
+%                 dLdR(:,:,1,i) = dlfft2(dLdZ1(:,:,1,i), layer.Rwq)  + dlfft2(dLdZ2(:,:,1,i), layer.Iwq);
+%                 dLdI(:,:,1,i) = dlfft2(dLdZ1(:,:,1,i), layer.nIwq) + dlfft2(dLdZ2(:,:,1,i), layer.Rwq);
+%             end
+% 
+%         end
 
     end
 end

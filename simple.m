@@ -10,14 +10,14 @@ ix     = round(Nx/ratio);
 iy     = round(Ny/ratio);
 nx     = 21e-3;
 ny     = 21e-3;
-d1     = 50e-2;
+d1     = 75e-2;
 d2     = 15e-2;
 wv     = 1550e-9;
 a0     = 20;
 r1     = nx/6;
 r2     = nx/35;
 rate   = 1;
-learningRate = 1e-8;
+learningRate = 1e-4;
 numTrainFiles = 750;
 lvalue = 0;
 sx     = 2;
@@ -58,7 +58,7 @@ Prop1       = CustomPropagationLayer('prop_layer', Nx, Ny, d1, w1);
 
 AbsLayer    = CustomAbsoluteLayer(2, 'absolute_layer', lvalue);
 
-Nonlinear1Layer  = reluLayer('Name', 'nonlinear1_layer');
+Nonlinear1Layer  = tanhLayer('Name', 'nonlinear1_layer');
 Nonlinear2Layer  = reluLayer('Name', 'nonlinear2_layer');
 
 BtcNorm1 = batchNormalizationLayer('Name', 'norm1_layer');
@@ -69,8 +69,8 @@ Flatten         = CustomFlattenLayer(1, 'flatten', Nx, Ny, nx, ny, r1, r2, lvalu
 Fully           = fullyConnectedLayer(10, 'Name', 'fully');
 SoftMax         = softmaxLayer('Name', 'softmax_layer');
 
-Classification2 = CustomClassificationLayer('classification_layer');
-Classification  = classificationLayer('Name', 'classification_layer', 'ClassWeights','none', 'Classes', 'auto');
+Classification  = classificationLayer('Name', 'classification_layer');
+Classification2 = CustomClassificationLayer('classification_layer', 0.25);
 
 layers = [
     InputLayer
@@ -97,7 +97,7 @@ layers = [
 
 options = trainingOptions('sgdm', ...
     'InitialLearnRate',learningRate, ...
-    'MaxEpochs',4, ...
+    'MaxEpochs',10, ...
     'Shuffle','every-epoch', ...
     'ValidationData',imdsValidation, ...
     'ValidationFrequency',30, ...
