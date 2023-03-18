@@ -112,8 +112,9 @@ classdef CustomKernelLayer < nnet.layer.Layer %  & nnet.layer.Acceleratable
                 W(4)=1;
             end
             
-            dLdW1 = zeros(size(layer.real_kernel), 'single');
-            dLdW2 = zeros(size(layer.imag_kernel), 'single');
+            dLdW1 = zeros(size(layer.real_kernel), 'like', dLdZ1);
+            dLdW2 = zeros(size(layer.imag_kernel), 'like', dLdZ2);
+
             for i=1:W(4)
                 dLdW1 = dLdW1 + (dLdZ1(:, :, 1, i) .* X(:,:,1,i) * layer.rate/W(4));
                 dLdW2 = dLdW2 + (dLdZ2(:, :, 1, i) .* X(:,:,1,i) * layer.rate/W(4));

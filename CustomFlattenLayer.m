@@ -80,16 +80,22 @@ classdef CustomFlattenLayer < nnet.layer.Layer
 
             % Define layer predict function here.
             W = size(X1);
+
             if length(W)<=2
                 W(3)=1;
                 W(4)=1;
-                Z = zeros(1,1,10,W(4), 'single');
-            else
-                Z = gpuArray(zeros(1,1,10,W(4), 'single'));
             end
 
+            Z = zeros(1, 1, 10, W(4), 'like', X1);
+    
+            z = zeros(1, 1, 10, 'like', Z);
             for i=1:W(4)
-                Z(1,1,:,i)=detector_values(X1(:,:,1,i), layer.Nx, layer.Ny, layer.nx, layer.ny, layer.r1, layer.r2, layer.lvalue);
+                
+                for j=1:10
+                    jplate = layer.plates(:, :, j);
+                    z(j)=sum(sum(jplate.*X1(:,:,1,i)));
+                end
+                Z(1,1,:,i)=z;
             end
         end
 
@@ -131,13 +137,13 @@ classdef CustomFlattenLayer < nnet.layer.Layer
 
             % Define layer backward function here.
             W = size(X1);
+
             if length(W) <= 2
                 W(3)=1;
                 W(4)=1;
-                dLdX1 = zeros(W, 'single');
-            else
-                dLdX1 = gpuArray(zeros(W, 'single'));
             end
+
+            dLdX1 = zeros(W, 'like', X1);
 
             for i=1:W(4)
                 for j=1:10

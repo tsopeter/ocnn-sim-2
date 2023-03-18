@@ -66,11 +66,9 @@ classdef CustomResizeLayer < nnet.layer.Layer % ...
             %    parameters.
 
             % Define layer predict function here.
-            W = size(X);
-            Z = (resize_normalize_extend(X, layer.Nx, layer.Ny, layer.k, layer.lvalue));
-            if length(W) > 2
-                Z = gpuArray(Z);
-            end
+            mx = max(max(max(X)));
+            Z = (resize_normalize_extend(X, layer.Nx, layer.Ny, layer.k, layer.lvalue, mx));
+
         end
 
         function dLdX = backward(layer,X,Z,dLdZ,dLdSout)
@@ -110,7 +108,9 @@ classdef CustomResizeLayer < nnet.layer.Layer % ...
             %    of state parameters.
 
             % Define layer backward function here.
-            dLdX = dLdZ;
+            W = size(dLdZ);
+
+            dLdX = zeros(W, 'like', dLdZ);
         end
     end
 end
