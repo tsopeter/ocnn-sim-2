@@ -69,64 +69,63 @@ classdef CustomReLULayer < nnet.layer.Layer % ...
 
             % Define layer predict function here.
             Q = sqrt(X1.^2+X2.^2);
-            Q(Q==0)=layer.lvalue;
             C = 1 ./ Q;
             Z = layer.sc * (tanh((Q/layer.sz)-layer.sx)+layer.sy);
             Z(Z==0)=layer.lvalue;
             Z1 = Z .* (X1 .* C);
             Z2 = Z .* (X2 .* C);
         end
-
-        function [dLdX1, dLdX2] = backward(layer,X1, X2, Z1, Z2, dLdZ1, dLdZ2, dLdSout)
-            % (Optional) Backward propagate the derivative of the loss
-            % function through the layer.
-            %
-            % Inputs:
-            %         layer   - Layer to backward propagate through 
-            %         X       - Layer input data 
-            %         Z       - Layer output data 
-            %         dLdZ    - Derivative of loss with respect to layer 
-            %                   output
-            %         dLdSout - (Optional) Derivative of loss with respect 
-            %                   to state output
-            %         memory  - Memory value from forward function
-            % Outputs:
-            %         dLdX   - Derivative of loss with respect to layer input
-            %         dLdW   - (Optional) Derivative of loss with respect to
-            %                  learnable parameter 
-            %         dLdSin - (Optional) Derivative of loss with respect to 
-            %                  state input
-            %
-            %  - For layers with state parameters, the backward syntax must
-            %    include both dLdSout and dLdSin, or neither.
-            %  - For layers with multiple inputs, replace X and dLdX with
-            %    X1,...,XN and dLdX1,...,dLdXN, respectively, where N is
-            %    the number of inputs.
-            %  - For layers with multiple outputs, replace Z and dlZ with
-            %    Z1,...,ZM and dLdZ,...,dLdZM, respectively, where M is the
-            %    number of outputs.
-            %  - For layers with multiple learnable parameters, replace 
-            %    dLdW with dLdW1,...,dLdWP, where P is the number of 
-            %    learnable parameters.
-            %  - For layers with multiple state parameters, replace dLdSin
-            %    and dLdSout with dLdSin1,...,dLdSinK and 
-            %    dLdSout1,...,dldSoutK, respectively, where K is the number
-            %    of state parameters.
-
-            % Define layer backward function here.
-            Q = sqrt(X1.^2+X2.^2);
-            Q(Q==0)=layer.lvalue;
-            C = 1 ./ Q;
-            ZQ   =layer.sc * (tanh((Q/layer.sz)-layer.sx)+layer.sy);
-            dZdQ = layer.sc * (sech((Q/layer.sz)-layer.sx).^2) ./ layer.sz;
-            ZQ(ZQ==0)=layer.lvalue;
-            dZdQ(dZdQ==0)=layer.lvalue;
-            dZ1dX1 = C .* (ZQ + X1 .* (dZdQ .* C .* X1 + ZQ .* X1));
-            dZ1dX2 = X1 .* (dZdQ .* C .* X2 + ZQ .* C .* X2);
-            dZ2dX1 = X2 .* (dZdQ .* C .* X1 + ZQ .* C .* X1);
-            dZ2dX2 = C .* (ZQ + X2 .* (dZdQ .* C .* X2 + ZQ .* X2));
-            dLdX1 = (dLdZ1 .* dZ1dX1) + (dLdZ2 .* dZ2dX1);
-            dLdX2 = (dLdZ2 .* dZ2dX2) + (dLdZ1 .* dZ1dX2);
-        end
+% 
+%         function [dLdX1, dLdX2] = backward(layer,X1, X2, Z1, Z2, dLdZ1, dLdZ2, dLdSout)
+%             % (Optional) Backward propagate the derivative of the loss
+%             % function through the layer.
+%             %
+%             % Inputs:
+%             %         layer   - Layer to backward propagate through 
+%             %         X       - Layer input data 
+%             %         Z       - Layer output data 
+%             %         dLdZ    - Derivative of loss with respect to layer 
+%             %                   output
+%             %         dLdSout - (Optional) Derivative of loss with respect 
+%             %                   to state output
+%             %         memory  - Memory value from forward function
+%             % Outputs:
+%             %         dLdX   - Derivative of loss with respect to layer input
+%             %         dLdW   - (Optional) Derivative of loss with respect to
+%             %                  learnable parameter 
+%             %         dLdSin - (Optional) Derivative of loss with respect to 
+%             %                  state input
+%             %
+%             %  - For layers with state parameters, the backward syntax must
+%             %    include both dLdSout and dLdSin, or neither.
+%             %  - For layers with multiple inputs, replace X and dLdX with
+%             %    X1,...,XN and dLdX1,...,dLdXN, respectively, where N is
+%             %    the number of inputs.
+%             %  - For layers with multiple outputs, replace Z and dlZ with
+%             %    Z1,...,ZM and dLdZ,...,dLdZM, respectively, where M is the
+%             %    number of outputs.
+%             %  - For layers with multiple learnable parameters, replace 
+%             %    dLdW with dLdW1,...,dLdWP, where P is the number of 
+%             %    learnable parameters.
+%             %  - For layers with multiple state parameters, replace dLdSin
+%             %    and dLdSout with dLdSin1,...,dLdSinK and 
+%             %    dLdSout1,...,dldSoutK, respectively, where K is the number
+%             %    of state parameters.
+% 
+%             % Define layer backward function here.
+%             Q = sqrt(X1.^2+X2.^2);
+%             Q(Q==0)=layer.lvalue;
+%             C = 1 ./ Q;
+%             ZQ   =layer.sc * (tanh((Q/layer.sz)-layer.sx)+layer.sy);
+%             dZdQ = layer.sc * (sech((Q/layer.sz)-layer.sx).^2) ./ layer.sz;
+%             ZQ(ZQ==0)=layer.lvalue;
+%             dZdQ(dZdQ==0)=layer.lvalue;
+%             dZ1dX1 = C .* (ZQ + X1 .* (dZdQ .* C .* X1 + ZQ .* X1));
+%             dZ1dX2 = X1 .* (dZdQ .* C .* X2 + ZQ .* C .* X2);
+%             dZ2dX1 = X2 .* (dZdQ .* C .* X1 + ZQ .* C .* X1);
+%             dZ2dX2 = C .* (ZQ + X2 .* (dZdQ .* C .* X2 + ZQ .* X2));
+%             dLdX1 = (dLdZ1 .* dZ1dX1) + (dLdZ2 .* dZ2dX1);
+%             dLdX2 = (dLdZ2 .* dZ2dX2) + (dLdZ1 .* dZ1dX2);
+%         end
     end
 end

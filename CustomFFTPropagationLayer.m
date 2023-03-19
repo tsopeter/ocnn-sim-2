@@ -1,4 +1,4 @@
-classdef CustomPropagationLayer < nnet.layer.Layer 
+classdef CustomFFTPropagationLayer < nnet.layer.Layer 
         % & nnet.layer.Formattable ... % (Optional) 
         % & nnet.layer.Acceleratable % (Optional)
 
@@ -15,6 +15,10 @@ classdef CustomPropagationLayer < nnet.layer.Layer
         dist
         Rw
         Iw
+        Rwq
+        Iwq
+        Fw
+        Fwc
     end
 
     properties (Learnable)
@@ -37,9 +41,10 @@ classdef CustomPropagationLayer < nnet.layer.Layer
     end
 
     methods
-        function layer = CustomPropagationLayer(Name, Nx, Ny, dist, W)
+        function layer = CustomFFTPropagationLayer(Name, Nx, Ny, dist, W)
             % (Optional) Create a myLayer.
             % This function must have the same name as the class.
+            W = fftshift(W);
 
             % Define layer constructor function here.
             layer.Name       = Name;
@@ -49,13 +54,19 @@ classdef CustomPropagationLayer < nnet.layer.Layer
             layer.Ny         = Ny;
             layer.dist       = dist;
             layer.w          = W;
-            layer.wq         = fft2(layer.w);
-            layer.wf         = W';
-            layer.wfq        = fft2(layer.wf);
+            layer.Fw         = fft2(layer.w);
+            layer.Fwc        = conj(layer.Fw);
+            layer.wf         = rot90(W, 2);
 
-            layer.Rw         = fft2(real(layer.w));
-            layer.Iw         = fft2(imag(layer.w));
-      
+            temp = fft2(layer.w);
+
+            layer.Rw         = real(temp);
+            layer.Iw         = imag(temp);
+
+            temp = fft2(layer.wf);
+
+            layer.Rwq        = real(temp);
+            layer.Iwq        = imag(temp);
         end
         
         function [Z1, Z2] = predict(layer, R, I)
@@ -78,28 +89,39 @@ classdef CustomPropagationLayer < nnet.layer.Layer
             %    parameters.
 
             % Define layer predict function here.
-            W  = size(R);
-
-            if length(W) <= 2
-                W(3) = 1;
-                W(4) = 1;
+            W  = size(layer.w);
+            V  = size(R);
+            if length(V) <= 2
+                V(3) = 1;
+                V(4) = 1;
             end
 
-            Z1 = zeros(W, 'like', R);
-            Z2 = zeros(W, 'like', I);
+            Z1 = zeros([W V(3) V(4)], 'like', R);
+            Z2 = zeros([W V(3) V(4)], 'like', I);
+
+            if isa(class(R), 'dlarray')
+                Re = extractdata(R);
+                Ie = extractdata(I);
+            else
+                Re=R;
+                Ie=I;
+            end
+
+            Z = Re + 1i * Ie;
 
             %
             % Z1 = R * Rw - I * Iw
             % Z2 = R * Iw + I * Rw
 
-            function z = dlfft2(x, y)
-                z = fft(fft(x).').' * y;
-                z = ifft(ifft(z).').';
+            for i=1:V(4)
+                Q = fft_conv2(Z(:,:,1,i), layer.Fw);
+                Z1(:,:,1,i) = real(Q);
+                Z2(:,:,1,i) = imag(Q);
             end
 
-            for i=1:W(4)
-                Z1(:,:,1,i) = real(dlfft2(R(:,:,1,i), layer.Rw) - dlfft2(I(:,:,1,i), layer.Iw));
-                Z2(:,:,1,i) = real(dlfft2(R(:,:,1,i), layer.Iw) + dlfft2(I(:,:,1,i), layer.Rw));
+            if isa(class(R), 'dlarray')
+                Z1 = dlarray(Z1);
+                Z2 = dlarray(Z2);
             end
         end
 
@@ -140,23 +162,42 @@ classdef CustomPropagationLayer < nnet.layer.Layer
             %    of state parameters.
 
             % Define layer backward function here.
-            function z = dlfft2(x, y)
-                z = fft(fft(x).').' * y;
-                z = ifft(ifft(z).').';
+            V  = size(R);
+
+            if length(V) <= 2
+                V(3) = 1;
+                V(4) = 1;
             end
 
-            W  = size(R);
+            % Ry = conv(R, Rw) - conv(I, Iw)
+            % Iy = conv(R, Iw) + conv(I, Rw)
 
-            if length(W) <= 2
-                W(3) = 1;
-                W(4) = 1;
+            % dLdR = dLd
+            %
+
+            dLdR = zeros(V, 'like', dLdZ1);
+            dLdI = zeros(V, 'like', dLdZ2);
+    
+            if isa(class(dLdZ1), 'dlarray')
+                dLdZ1e = extractdata(dLdZ1);
+                dLdZ2e = extractdata(dLdZ2);
+            else
+                dLdZ1e = dLdZ1;
+                dLdZ2e = dLdZ2;
             end
 
-            dLdR = zeros(W, 'like', R);
-            dL = zeros(W, 'like', I);
+            Z = dLdZ1e + 1i * dLdZ2e;
 
+            for i=1:V(4)
+                Q = fft_conv2(Z(:,:,1,i), layer.Fwc);
+                dLdR(:,:,1,i) = real(Q);
+                dLdI(:,:,1,i) = imag(Q);
+            end
 
+            if isa(class(R), 'dlarray')
+                dLdR = dlarray(dLdR);
+                dLdI = dlarray(dLdI);
+            end
         end
-
     end
 end

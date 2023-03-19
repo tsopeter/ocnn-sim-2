@@ -9,6 +9,7 @@ classdef CustomResizeLayer < nnet.layer.Layer % ...
         Nx
         Ny
         k
+        P
         lvalue
     end
 
@@ -32,7 +33,7 @@ classdef CustomResizeLayer < nnet.layer.Layer % ...
     end
 
     methods
-        function layer = CustomResizeLayer(NumInputs, Name, Nx, Ny, k, lvalue)
+        function layer = CustomResizeLayer(NumInputs, Name, Nx, Ny, k, lvalue, P)
             % (Optional) Create a myLayer.
             % This function must have the same name as the class.
 
@@ -44,6 +45,7 @@ classdef CustomResizeLayer < nnet.layer.Layer % ...
             layer.Ny = Ny;
             layer.k  = k;
             layer.lvalue = lvalue;
+            layer.P = P;
         end
         
         function Z = predict(layer,X)
@@ -66,13 +68,25 @@ classdef CustomResizeLayer < nnet.layer.Layer % ...
             %    parameters.
 
             % Define layer predict function here.
-            mx = max(max(max(X)));
 
-            Z = zeros([layer.Nx, layer.Ny, size(X, 3), size(X, 4)], 'like', X);
+            if isa(X, 'dlarray')
+                Xe = extractdata(X);
+            else
+                Xe = X;
+            end
+
+            Z = zeros([layer.Nx, layer.Ny, size(X, 3), size(X, 4)], 'like', Xe);
+            mx = max(max(max(Xe)));
 
             for i=1:size(X, 4)
                 % normalize, resize and extend
-                Z(:,:,1,i) = mask_resize(interp2(X(:,:,1,i) ./ mx, layer.k), layer.Nx, layer.Ny);
+                Z(:,:,1,i) = mask_resize(interp2(Xe(:,:,1,i) ./ mx, layer.k), layer.Nx, layer.Ny);
+            end
+
+            Z = Z * layer.P;
+
+            if isa(X, 'dlarray')
+                Z = dlarray(Z);
             end
 
         end

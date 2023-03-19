@@ -1,4 +1,4 @@
-classdef CustomPropagationLayer < nnet.layer.Layer 
+classdef CustomReValueLayer < nnet.layer.Layer 
         % & nnet.layer.Formattable ... % (Optional) 
         % & nnet.layer.Acceleratable % (Optional)
 
@@ -6,17 +6,6 @@ classdef CustomPropagationLayer < nnet.layer.Layer
         % (Optional) Layer properties.
 
         % Declare layer properties here.
-        Nx
-        Ny
-        w
-        wq
-        wf
-        wfq
-        dist
-        Rw
-        Iw
-        Rwq
-        Iwq
     end
 
     properties (Learnable)
@@ -39,26 +28,15 @@ classdef CustomPropagationLayer < nnet.layer.Layer
     end
 
     methods
-        function layer = CustomPropagationLayer(Name, Nx, Ny, dist, W)
+        function layer = CustomReValueLayer(Name)
             % (Optional) Create a myLayer.
             % This function must have the same name as the class.
-
-            % Define layer constructor function here.
-            layer.Name       = Name;
-            layer.NumInputs  = 2;
+            layer.Name = Name;
+            layer.NumInputs  = 3;
             layer.NumOutputs = 2;
-            layer.Nx         = Nx;
-            layer.Ny         = Ny;
-            layer.dist       = dist;
-            layer.w          = W;
-            layer.wf         = rot90(W, 2);
-            layer.Rw         = real(layer.w);
-            layer.Iw         = imag(layer.w);
-            layer.Rwq        = real(layer.wf);
-            layer.Iwq        = imag(layer.wf);
         end
         
-        function [Z1, Z2] = predict(layer, R, I)
+        function [Z1, Z2] = predict(layer, A, R, I)
             % Forward input data through the layer at prediction time and
             % output the result and updated state.
             %
@@ -78,27 +56,21 @@ classdef CustomPropagationLayer < nnet.layer.Layer
             %    parameters.
 
             % Define layer predict function here.
-            W  = size(layer.w)+1;
-            V  = size(R);
-            if length(V) <= 2
-                V(3) = 1;
-                V(4) = 1;
-            end
+            
+            % A is the absolute value to aim towards
+            % R is the real-valued
+            % I is the imag-valued
 
-            Z1 = zeros([W V(3) V(4)], 'like', R);
-            Z2 = zeros([W V(3) V(4)], 'like', I);
+            B2 = R.^2 + I.^2;
+            B  = sqrt(B2);
 
-            %
-            % Z1 = R * Rw - I * Iw
-            % Z2 = R * Iw + I * Rw
 
-            for i=1:V(4)
-                Z1(:,:,1,i) = conv2(R(:,:,1,i), layer.Rw, 'valid') - conv2(I(:,:,1,i), layer.Iw, 'valid');
-                Z2(:,:,1,i) = conv2(R(:,:,1,i), layer.Iw, 'valid') + conv2(I(:,:,1,i), layer.Rw, 'valid');
-            end
+            M  = A ./ B;
+            Z1 = R .* M;
+            Z2 = I .* M;
         end
 
-        function [dLdR, dLdI] = backward(layer, R, I, Z1, Z2, dLdZ1, dLdZ2, dLdSout)
+        function [dLdA, dLdR, dLdI] = backward(layer, A, R, I, Z1, Z2, dLdZ1, dLdZ2, dLdSout)
             % (Optional) Backward propagate the derivative of the loss
             % function through the layer.
             %
@@ -135,27 +107,28 @@ classdef CustomPropagationLayer < nnet.layer.Layer
             %    of state parameters.
 
             % Define layer backward function here.
-            V  = size(R);
 
-            if length(V) <= 2
-                V(3) = 1;
-                V(4) = 1;
-            end
+            B2 = R.^2 + I.^2;
+            B  = sqrt(B2);
+            C  = 1 ./ B;
 
-            % Ry = conv(R, Rw) - conv(I, Iw)
-            % Iy = conv(R, Iw) + conv(I, Rw)
+            dBR = C .* R;
+            dBI = C .* I;
 
-            % dLdR = dLd
-            %
+            M  = A ./ B;
+            M2 = A ./ B2;
 
-            dLdR = zeros(V, 'like', dLdZ1);
-            dLdI = zeros(V, 'like', dLdZ2);
+            R2 = M2 .* dBR;
+            I2 = M2 .* dBI;
 
-            for i=1:V(4)
-                dLdR(:,:,1,i) =      conv2(layer.Rwq, dLdZ1(:,:,1,i), 'full')  + conv2(layer.Iwq, dLdZ2(:,:,1,i), 'full');
-                dLdI(:,:,1,i) = -1 * conv2(layer.Iwq, dLdZ1(:,:,1,i), 'full')  + conv2(layer.Rwq, dLdZ2(:,:,1,i), 'full');
-            end
+            dZ1dR = M - R  .* R2;
+            dZ2dR = -1 * I .* R2;
+            dZ1dI = -1 * R .* I2;
+            dZ2dI = M - I  .* I2;
+
+            dLdR = (dLdZ1 .* dZ1dR) + (dLdZ2 .* dZ2dR);
+            dLdI = (dLdZ1 .* dZ1dI) + (dLdZ2 .* dZ2dI);
+            dLdA = (dLdZ1 .* dBR)   + (dLdZ2 .* dBI);
         end
-
     end
 end
