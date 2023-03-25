@@ -55,7 +55,7 @@ classdef CustomFlattenLayer < nnet.layer.Layer
             layer.plate = detector_plate(Nx, Ny, nx, ny, r1, r2, lvalue);
            
             for r=0:9
-                layer.plates(:,:,r+1)=imrotate(circle_at(Nx, Ny, nx, ny, r1, 0, r2, lvalue), 36*r, 'crop');
+                layer.plates(:,:,r+1)=dlarray(imrotate(circle_at(Nx, Ny, nx, ny, r1, 0, r2, lvalue), 36*r, 'crop'));
             end
         end
         
@@ -147,7 +147,7 @@ classdef CustomFlattenLayer < nnet.layer.Layer
 
             for i=1:W(4)
                 for j=1:10
-                    dLdX1(:,:,1,i) = dLdX1(:,:,1,i) + (layer.plates(:,:,j) * dLdZ(1,1,j,i));
+                    dLdX1(:,:,1,i) = dLdX1(:,:,1,i) + (layer.plates(:,:,j) .* dLdZ(1,1,j,i));
                 end
             end
         end

@@ -19,6 +19,7 @@ classdef CustomFFTPropagationLayer < nnet.layer.Layer
         Iwq
         Fw
         Fwc
+        res_size
     end
 
     properties (Learnable)
@@ -67,6 +68,7 @@ classdef CustomFFTPropagationLayer < nnet.layer.Layer
 
             layer.Rwq        = real(temp);
             layer.Iwq        = imag(temp);
+            layer.res_size   = size(layer.w);
         end
         
         function [Z1, Z2] = predict(layer, R, I)

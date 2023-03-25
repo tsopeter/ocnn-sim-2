@@ -6,7 +6,7 @@ classdef CustomNonlinearLayer < nnet.layer.Layer % & nnet.layer.Acceleratable
         % (Optional) Layer properties.
 
         % Declare layer properties here.
-        a0 = 20;
+        a0 = 4;
         lvalue;
     end
 
@@ -61,96 +61,77 @@ classdef CustomNonlinearLayer < nnet.layer.Layer % & nnet.layer.Acceleratable
             %    parameters.
 
             % Define layer predict function here.
-            W = size(X1);
-            if length(W)<=2
-                W(3)=1;
-                W(4)=1;
-            end
-            AZ1 = zeros(W,'single');
-            AZ2 = zeros(W,'single');
-            for i=1:W(4)
-                QX = X1(:,:,1,i);
-                QY = X2(:,:,1,i);
-                M = sqrt(QX.^2+QY.^2);
-                M(M==0) = layer.lvalue;
-                G = single(nonlinear_forward(M, layer.a0)./M);
-                AZ1(:,:,1,i)=single(QX .* G);
-                AZ2(:,:,1,i)=single(QY .* G);
-            end
-            if W(4) == 1
-                Z1 = single(AZ1);
-                Z2 = single(AZ2);
-            else
-                Z1 = gpuArray(AZ1);
-                Z2 = gpuArray(AZ2);
-            end
+            G  = sqrt(X1.^2+X2.^2);
+            N = exp(-1*layer.a0./2./(1+(X1.^2+X2.^2))).*G;
+            Z1 = N./G .* X1;
+            Z2 = N./G .* X2;
         end
 
-        function [dLdX1, dLdX2] = backward(layer,X1, X2, Z1, Z2, dLdZ1, dLdZ2, dLdSout)
-            % (Optional) Backward propagate the derivative of the loss
-            % function through the layer.
-            %
-            % Inputs:
-            %         layer   - Layer to backward propagate through 
-            %         X       - Layer input data 
-            %         Z       - Layer output data 
-            %         dLdZ    - Derivative of loss with respect to layer 
-            %                   output
-            %         dLdSout - (Optional) Derivative of loss with respect 
-            %                   to state output
-            %         memory  - Memory value from forward function
-            % Outputs:
-            %         dLdX   - Derivative of loss with respect to layer input
-            %         dLdW   - (Optional) Derivative of loss with respect to
-            %                  learnable parameter 
-            %         dLdSin - (Optional) Derivative of loss with respect to 
-            %                  state input
-            %
-            %  - For layers with state parameters, the backward syntax must
-            %    include both dLdSout and dLdSin, or neither.
-            %  - For layers with multiple inputs, replace X and dLdX with
-            %    X1,...,XN and dLdX1,...,dLdXN, respectively, where N is
-            %    the number of inputs.
-            %  - For layers with multiple outputs, replace Z and dlZ with
-            %    Z1,...,ZM and dLdZ,...,dLdZM, respectively, where M is the
-            %    number of outputs.
-            %  - For layers with multiple learnable parameters, replace 
-            %    dLdW with dLdW1,...,dLdWP, where P is the number of 
-            %    learnable parameters.
-            %  - For layers with multiple state parameters, replace dLdSin
-            %    and dLdSout with dLdSin1,...,dLdSinK and 
-            %    dLdSout1,...,dldSoutK, respectively, where K is the number
-            %    of state parameters.
-
-            % Define layer backward function here.
-            W = size(X1);
-            function R = internal_implt_derivation(XI, YI)
-                C  = sqrt(XI.^2+YI.^2);
-                C(C==0) = layer.lvalue;
-                G  = nonlinear_backward(C, layer.a0);
-                Q  = 1 ./ C;
-                F1 = G .* Q .* XI;
-                F2 = G .* (Q + (XI.^2) .* (Q.^3));
-                R = F1 + F2;
-            end
-            AdLdX1 = gpuArray(zeros(W,'single'));
-            AdLdX2 = gpuArray(zeros(W,'single'));
-
-            if length(W)<=2
-                W(3)=1;
-                W(4)=1;
-            end
-
-            for i=1:W(4)
-                QX   = X1(:,:,1,i);
-                QY   = X2(:,:,1,i);
-                QdZ1 = dLdZ1(:,:,1,i);
-                QdZ2 = dLdZ2(:,:,1,i);
-                AdLdX1(:,:,1,i)=single(QdZ1 .* internal_implt_derivation(QX, QY));
-                AdLdX2(:,:,1,i)=single(QdZ2 .* internal_implt_derivation(QY, QX));
-            end
-            dLdX1 = single(AdLdX1);
-            dLdX2 = single(AdLdX2);
-        end
+        % function [dLdX1, dLdX2] = backward(layer,X1, X2, Z1, Z2, dLdZ1, dLdZ2, dLdSout)
+        %     % (Optional) Backward propagate the derivative of the loss
+        %     % function through the layer.
+        %     %
+        %     % Inputs:
+        %     %         layer   - Layer to backward propagate through 
+        %     %         X       - Layer input data 
+        %     %         Z       - Layer output data 
+        %     %         dLdZ    - Derivative of loss with respect to layer 
+        %     %                   output
+        %     %         dLdSout - (Optional) Derivative of loss with respect 
+        %     %                   to state output
+        %     %         memory  - Memory value from forward function
+        %     % Outputs:
+        %     %         dLdX   - Derivative of loss with respect to layer input
+        %     %         dLdW   - (Optional) Derivative of loss with respect to
+        %     %                  learnable parameter 
+        %     %         dLdSin - (Optional) Derivative of loss with respect to 
+        %     %                  state input
+        %     %
+        %     %  - For layers with state parameters, the backward syntax must
+        %     %    include both dLdSout and dLdSin, or neither.
+        %     %  - For layers with multiple inputs, replace X and dLdX with
+        %     %    X1,...,XN and dLdX1,...,dLdXN, respectively, where N is
+        %     %    the number of inputs.
+        %     %  - For layers with multiple outputs, replace Z and dlZ with
+        %     %    Z1,...,ZM and dLdZ,...,dLdZM, respectively, where M is the
+        %     %    number of outputs.
+        %     %  - For layers with multiple learnable parameters, replace 
+        %     %    dLdW with dLdW1,...,dLdWP, where P is the number of 
+        %     %    learnable parameters.
+        %     %  - For layers with multiple state parameters, replace dLdSin
+        %     %    and dLdSout with dLdSin1,...,dLdSinK and 
+        %     %    dLdSout1,...,dldSoutK, respectively, where K is the number
+        %     %    of state parameters.
+        % 
+        %     % Define layer backward function here.
+        %     W = size(X1);
+        %     function R = internal_implt_derivation(XI, YI)
+        %         C  = sqrt(XI.^2+YI.^2);
+        %         C(C==0) = layer.lvalue;
+        %         G  = nonlinear_backward(C, layer.a0);
+        %         Q  = 1 ./ C;
+        %         F1 = G .* Q .* XI;
+        %         F2 = G .* (Q + (XI.^2) .* (Q.^3));
+        %         R = F1 + F2;
+        %     end
+        %     AdLdX1 = gpuArray(zeros(W,'single'));
+        %     AdLdX2 = gpuArray(zeros(W,'single'));
+        % 
+        %     if length(W)<=2
+        %         W(3)=1;
+        %         W(4)=1;
+        %     end
+        % 
+        %     for i=1:W(4)
+        %         QX   = X1(:,:,1,i);
+        %         QY   = X2(:,:,1,i);
+        %         QdZ1 = dLdZ1(:,:,1,i);
+        %         QdZ2 = dLdZ2(:,:,1,i);
+        %         AdLdX1(:,:,1,i)=single(QdZ1 .* internal_implt_derivation(QX, QY));
+        %         AdLdX2(:,:,1,i)=single(QdZ2 .* internal_implt_derivation(QY, QX));
+        %     end
+        %     dLdX1 = single(AdLdX1);
+        %     dLdX2 = single(AdLdX2);
+        % end
     end
 end

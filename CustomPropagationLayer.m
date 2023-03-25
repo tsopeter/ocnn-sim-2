@@ -17,6 +17,7 @@ classdef CustomPropagationLayer < nnet.layer.Layer
         Iw
         Rwq
         Iwq
+        res_size
     end
 
     properties (Learnable)
@@ -56,6 +57,7 @@ classdef CustomPropagationLayer < nnet.layer.Layer
             layer.Iw         = imag(layer.w);
             layer.Rwq        = real(layer.wf);
             layer.Iwq        = imag(layer.wf);
+            layer.res_size   = size(conv2(ones(Nx, Ny), W, 'valid'));
         end
         
         function [Z1, Z2] = predict(layer, R, I)
@@ -93,8 +95,11 @@ classdef CustomPropagationLayer < nnet.layer.Layer
             % Z2 = R * Iw + I * Rw
 
             for i=1:V(4)
-                Z1(:,:,1,i) = conv2(R(:,:,1,i), layer.Rw, 'valid') - conv2(I(:,:,1,i), layer.Iw, 'valid');
-                Z2(:,:,1,i) = conv2(R(:,:,1,i), layer.Iw, 'valid') + conv2(I(:,:,1,i), layer.Rw, 'valid');
+                Q = conv2(R(:,:,1,i)+1i*I(:,:,1,i), layer.w, 'valid');
+                Z1(:,:,1,i) = real(Q);
+                Z2(:,:,1,i) = imag(Q);
+                %Z1(:,:,1,i) = conv2(R(:,:,1,i), layer.Rw, 'valid') - conv2(I(:,:,1,i), layer.Iw, 'valid');
+                %Z2(:,:,1,i) = conv2(R(:,:,1,i), layer.Iw, 'valid') + conv2(I(:,:,1,i), layer.Rw, 'valid');
             end
         end
 

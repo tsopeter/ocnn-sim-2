@@ -30,12 +30,11 @@ classdef CustomClassificationLayer < nnet.layer.ClassificationLayer % ...
             %         loss  - Loss between Y and T
 
             % Layer forward loss function goes here.
-            loss = crossentropy(Y, T .* layer.modifier, dlarray(ones(size(T), 'like', T)), 'NormalizationFactor','all-elements', 'DataFormat', 'SSCB');
+            loss = 0.5 * sum((T-Y).^2, 'all')/length(size(Y,4));
         end
 
-%          function dYdL = backwardLoss(layer, Y, T)
-%              dYdL = zeros(size(Y), 'like', Y);
-%              
-%          end
+         function dYdL = backwardLoss(layer, Y, T)
+             dYdL = Y - T;
+         end
     end
 end

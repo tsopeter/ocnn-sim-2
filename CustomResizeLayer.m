@@ -76,14 +76,15 @@ classdef CustomResizeLayer < nnet.layer.Layer % ...
             end
 
             Z = zeros([layer.Nx, layer.Ny, size(X, 3), size(X, 4)], 'like', Xe);
-            mx = max(max(max(Xe)));
+            mx = 255;
 
             for i=1:size(X, 4)
                 % normalize, resize and extend
-                Z(:,:,1,i) = mask_resize(interp2(Xe(:,:,1,i) ./ mx, layer.k), layer.Nx, layer.Ny);
+                Z(:,:,1,i) = mask_resize(interp2(Xe(:,:,1,i) / mx, layer.k), layer.Nx, layer.Ny);
             end
 
-            Z = Z * layer.P;
+            Z = (Z * layer.P);
+            Z(Z==0)=layer.lvalue;
 
             if isa(X, 'dlarray')
                 Z = dlarray(Z);

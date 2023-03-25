@@ -69,6 +69,7 @@ classdef CustomReLULayer < nnet.layer.Layer % ...
 
             % Define layer predict function here.
             Q = sqrt(X1.^2+X2.^2);
+            Q(Q==0)=layer.lvalue;
             C = 1 ./ Q;
             Z = layer.sc * (tanh((Q/layer.sz)-layer.sx)+layer.sy);
             Z(Z==0)=layer.lvalue;

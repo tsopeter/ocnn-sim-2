@@ -7,6 +7,7 @@ classdef CustomKernelLayer < nnet.layer.Layer %  & nnet.layer.Acceleratable
 
         % Declare layer properties here.
         rate;
+        kernel;
     end
 
     properties (Learnable)
@@ -39,8 +40,9 @@ classdef CustomKernelLayer < nnet.layer.Layer %  & nnet.layer.Acceleratable
             layer.Name = Name;
             layer.NumInputs = NumInputs;
             layer.NumOutputs = 2;
-            layer.W1 = real(kernel);
-            layer.W2 = imag(kernel);
+            layer.kernel = kernel;
+            layer.W1 = dlarray(real(kernel));
+            layer.W2 = dlarray(imag(kernel));
             layer.rate = rate;
         end
         
@@ -64,8 +66,14 @@ classdef CustomKernelLayer < nnet.layer.Layer %  & nnet.layer.Acceleratable
             %    parameters.
 
             % Define layer predict function here.
+            % normalize and apply layer weights
             Z1 = X .* layer.W1;
             Z2 = X .* layer.W2;
+        end
+
+        function display_kernel(layer)
+            figure;
+            imagesc(extractdata(abs(layer.W1+1i*layer.W2)));
         end
 
 %         function [dLdX, dLdW1, dLdW2] = backward(layer, X, Z1, Z2, dLdZ1, dLdZ2, dLdSout)

@@ -1,0 +1,60 @@
+% workspace
+clear;
+parameters;
+
+Rx = Nx/ratio;
+Ry = Ny/ratio;
+rx = nx/ratio;
+ry = ny/ratio;
+
+w1 = fftshift(get_propagation_distance(Rx, Ry, rx, ry, d1, wv));
+
+% create resize layer
+resize = CustomResizeLayer(1, 'no_name', Nx, Ny, k, lvalue, P);
+
+% create the propgation layer
+prop1 = CustomLearnablePropagationLayer('no_name', Nx, Ny, Rx, Ry, nx, ny, d1, wv);
+
+% create the nonlinear layer
+nonlinear = CustomReLULayer(2, 'no_name', lvalue, sx, sy, sc, sz);
+
+% create the absolute layer
+abslayer = CustomAbsoluteLayer(2, 'no_name', lvalue);
+
+img = imread(cell2mat(dataTrain.Files(1)));
+x = resize.predict(single(img));
+[pry, piy] = prop1.predict(x, zeros(size(x)));
+[prz, piz] = nonlinear.predict(pry, piy);
+prp        = abslayer.predict(prz, piz);
+
+y = pry + 1i * piy;
+z = prz + 1i * piz;
+
+figure;
+imagesc(x);
+colorbar();
+figure;
+imagesc(extractdata(abs(y)));
+colorbar();
+figure;
+imagesc(extractdata(abs(z)));
+colorbar();
+figure;
+imagesc(exprp);
+colorbar();
+
+% % network test properties
+% Nx = 64;
+% Ny = 64;
+% ss = [Nx Ny];
+% rx = 32;
+% ry = 32;
+% d  = 1;
+% wx = randn(rx,ry)+1i*randn(rx,ry);
+% wy = randn(ss)+1i*randn(ss);
+% 
+% %
+% checkLayer(CustomPropagationLayer('no_name', 32, 32, 1, wx), {ss, ss});
+% 
+% %
+% % checkLayer(CustomFFTPropagationLayer('no_name', 32, 32, 1, wy), {ss, ss});
